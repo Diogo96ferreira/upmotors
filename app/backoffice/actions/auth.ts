@@ -11,10 +11,6 @@ export type BackofficeLoginState = {
   error: string;
 };
 
-export const initialBackofficeLoginState: BackofficeLoginState = {
-  error: "",
-};
-
 export async function loginBackoffice(
   _prevState: BackofficeLoginState,
   formData: FormData

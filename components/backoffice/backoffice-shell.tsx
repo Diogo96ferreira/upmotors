@@ -21,7 +21,7 @@ export function BackofficeShell({
       <div className="mb-10 flex flex-col gap-6 border-b border-white/10 pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-4">
           <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">
-            {company.name} Backoffice Demo
+            {company.name} Backoffice
           </p>
           <div>
             <h1 className="font-[family-name:var(--font-heading)] text-4xl font-bold uppercase tracking-tight">
@@ -32,7 +32,7 @@ export function BackofficeShell({
         </div>
 
         <div className="border border-white/10 px-4 py-3 text-[11px] uppercase tracking-[0.22em] text-zinc-400">
-          Modo demo
+          Ligado ao Supabase
         </div>
       </div>
 

@@ -9,10 +9,6 @@ export type CarFormState = {
   error: string;
 };
 
-export const initialCarFormState: CarFormState = {
-  error: "",
-};
-
 function getText(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -37,6 +33,54 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .replace(/-{2,}/g, "-");
+}
+
+function omitColumn<T extends Record<string, unknown>>(payload: T, column: string) {
+  const nextPayload = { ...payload };
+  delete nextPayload[column as keyof T];
+  return nextPayload;
+}
+
+function getMissingColumn(error: { code?: string; message?: string } | null) {
+  if (!error || error.code !== "PGRST204" || !error.message) {
+    return null;
+  }
+
+  const match = error.message.match(/Could not find the '([^']+)' column/);
+  return match?.[1] ?? null;
+}
+
+async function persistCar(
+  supabase: NonNullable<ReturnType<typeof getSupabaseServerClient>>,
+  id: string,
+  payload: Record<string, unknown>
+) {
+  let currentPayload = payload;
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const response = id
+      ? await supabase.from("cars").update(currentPayload).eq("id", id)
+      : await supabase.from("cars").insert(currentPayload);
+
+    if (!response.error) {
+      return { error: null };
+    }
+
+    const missingColumn = getMissingColumn(response.error);
+
+    if (!missingColumn || !(missingColumn in currentPayload)) {
+      return { error: response.error };
+    }
+
+    console.warn(`Coluna "${missingColumn}" nao existe em cars. A remover do payload e a tentar novamente.`);
+    currentPayload = omitColumn(currentPayload, missingColumn);
+  }
+
+  return {
+    error: {
+      message: "Nao foi possivel adaptar o payload ao schema de cars.",
+    },
+  };
 }
 
 export async function saveCar(
@@ -66,7 +110,7 @@ export async function saveCar(
   }
 
   const slugBase = getText(formData, "slug") || `${brand}-${model}-${year}`;
-  const payload = {
+  const payload: Record<string, unknown> = {
     slug: slugify(slugBase),
     brand,
     model,
@@ -99,13 +143,11 @@ export async function saveCar(
     },
   };
 
-  const response = id
-    ? await supabase.from("cars").update(payload).eq("id", id)
-    : await supabase.from("cars").insert(payload);
+  const response = await persistCar(supabase, id, payload);
 
   if (response.error) {
     console.error("Erro ao guardar carro:", response.error);
-    return { error: "Nao foi possivel guardar a viatura." };
+    return { error: "Nao foi possivel guardar a viatura com o schema atual da tabela cars." };
   }
 
   revalidatePath("/stock");

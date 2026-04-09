@@ -13,6 +13,8 @@ const CARS_SELECT = `
   )
 `;
 
+const FALLBACK_CARS_SELECT = "*";
+
 function sortCarImages(images: CarImageRow[] = []) {
   return [...images].sort((a, b) => (a.position ?? 9999) - (b.position ?? 9999));
 }
@@ -45,10 +47,10 @@ function normalizeCar(row: CarRow): Car {
     category: row.category,
     description: row.description,
     shortDescription:
-      row.shortDescription ?? "Viatura disponível para consulta com dossier técnico detalhado.",
+      row.shortDescription ?? "Viatura disponivel para consulta com dossier tecnico detalhado.",
     gallery,
     highlight:
-      row.highlight ?? "Curadoria técnica concluída pela equipa Up Motors com foco em transparência.",
+      row.highlight ?? "Curadoria tecnica concluida pela equipa Up Motors com foco em transparencia.",
     monthlyLabel: row.monthlyLabel ?? undefined,
     featured: row.featured ?? false,
     status: row.status,
@@ -63,22 +65,65 @@ function normalizeCar(row: CarRow): Car {
   };
 }
 
-export async function getCars(): Promise<Car[]> {
+async function selectCars() {
   if (!supabase) {
     return [];
   }
 
-  const { data, error } = await supabase
+  const withImages = await supabase
     .from("cars")
     .select(CARS_SELECT)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Erro ao carregar carros:", error);
+  if (!withImages.error) {
+    return (withImages.data ?? []) as CarRow[];
+  }
+
+  console.warn("Falha ao carregar relacao car_images, a usar fallback simples:", withImages.error);
+
+  const fallback = await supabase
+    .from("cars")
+    .select(FALLBACK_CARS_SELECT)
+    .order("created_at", { ascending: false });
+
+  if (fallback.error) {
+    console.error("Erro ao carregar carros:", fallback.error);
     return [];
   }
 
-  return ((data ?? []) as CarRow[]).map(normalizeCar);
+  return (fallback.data ?? []) as CarRow[];
+}
+
+async function selectSingleCar(column: "slug" | "id", value: string) {
+  if (!supabase) {
+    return null;
+  }
+
+  const withImages = await supabase.from("cars").select(CARS_SELECT).eq(column, value).maybeSingle();
+
+  if (!withImages.error) {
+    return (withImages.data as CarRow | null) ?? null;
+  }
+
+  console.warn(`Falha ao carregar detalhe com car_images por ${column}, a usar fallback:`, withImages.error);
+
+  const fallback = await supabase
+    .from("cars")
+    .select(FALLBACK_CARS_SELECT)
+    .eq(column, value)
+    .maybeSingle();
+
+  if (fallback.error) {
+    console.error("Erro ao carregar detalhe do carro:", fallback.error);
+    return null;
+  }
+
+  return (fallback.data as CarRow | null) ?? null;
+}
+
+export async function getCars(): Promise<Car[]> {
+  const rows = await selectCars();
+  return rows.map(normalizeCar);
 }
 
 export async function getFeaturedCars() {
@@ -99,37 +144,18 @@ function isUuid(value: string) {
 }
 
 export async function getCarBySlug(slugOrId: string) {
-  if (!supabase) {
-    return null;
-  }
+  const bySlug = await selectSingleCar("slug", slugOrId);
 
-  const { data, error } = await supabase
-    .from("cars")
-    .select(CARS_SELECT)
-    .eq("slug", slugOrId)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Erro ao carregar detalhe do carro:", error);
-    return null;
-  }
-
-  if (data) {
-    return normalizeCar(data as CarRow);
+  if (bySlug) {
+    return normalizeCar(bySlug);
   }
 
   if (!isUuid(slugOrId)) {
     return null;
   }
 
-  const fallback = await supabase.from("cars").select(CARS_SELECT).eq("id", slugOrId).maybeSingle();
-
-  if (fallback.error) {
-    console.error("Erro ao carregar detalhe do carro:", fallback.error);
-    return null;
-  }
-
-  return fallback.data ? normalizeCar(fallback.data as CarRow) : null;
+  const byId = await selectSingleCar("id", slugOrId);
+  return byId ? normalizeCar(byId) : null;
 }
 
 export async function getSimilarCars(slugOrId: string) {

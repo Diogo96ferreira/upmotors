@@ -1,17 +1,20 @@
-import { mockLeads } from "@/app/backoffice/mock-data";
+import { updateLeadStatus } from "@/app/backoffice/actions/admin";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { Select } from "@/components/ui/select";
+import { getLeadSubmissions } from "@/lib/backoffice-data";
 
 const leadStatuses = ["new", "contacted", "closed"] as const;
 
-export default function BackofficeLeadsPage() {
+export default async function BackofficeLeadsPage() {
+  const leads = await getLeadSubmissions();
+
   return (
     <BackofficeShell
       title="Leads"
-      description="Vista demo dos pedidos recebidos, sem ligacao ao backend."
+      description="Consulta os pedidos recebidos e atualiza o estado de acompanhamento."
     >
       <div className="space-y-5">
-        {mockLeads.map((lead) => (
+        {leads.map((lead) => (
           <article key={lead.id} className="border border-white/10 bg-zinc-950 p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-3">
@@ -35,9 +38,10 @@ export default function BackofficeLeadsPage() {
                 <p className="max-w-3xl text-sm leading-7 text-zinc-300">{lead.message}</p>
               </div>
 
-              <div className="w-full max-w-xs space-y-3">
+              <form action={updateLeadStatus} className="w-full max-w-xs space-y-3">
+                <input type="hidden" name="id" value={lead.id} />
                 <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">Estado do lead</p>
-                <Select defaultValue={lead.status} disabled>
+                <Select name="status" defaultValue={lead.status}>
                   {leadStatuses.map((status) => (
                     <option key={status} value={status}>
                       {status}
@@ -45,15 +49,21 @@ export default function BackofficeLeadsPage() {
                   ))}
                 </Select>
                 <button
-                  type="button"
+                  type="submit"
                   className="h-10 w-full border border-white/15 px-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-white transition hover:border-white/40 hover:bg-white/5"
                 >
-                  Atualizar visual
+                  Atualizar
                 </button>
-              </div>
+              </form>
             </div>
           </article>
         ))}
+
+        {leads.length === 0 ? (
+          <div className="border border-white/10 bg-zinc-950 p-8 text-sm text-zinc-400">
+            Ainda nao existem leads registados.
+          </div>
+        ) : null}
       </div>
     </BackofficeShell>
   );

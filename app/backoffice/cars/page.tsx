@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { mockCars } from "@/app/backoffice/mock-data";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
+import { getAdminCars } from "@/lib/backoffice-data";
 
-export default function BackofficeCarsPage() {
+export default async function BackofficeCarsPage() {
+  const cars = await getAdminCars();
+
   return (
     <BackofficeShell
       title="Viaturas"
-      description="Lista visual de stock em modo demo."
+      description="Cria, edita e acompanha o stock publicado na frente publica."
     >
       <div className="mb-6 flex justify-end">
         <Link
@@ -26,7 +28,7 @@ export default function BackofficeCarsPage() {
           <span className="text-right">Preco</span>
         </div>
 
-        {mockCars.map((car) => (
+        {cars.map((car) => (
           <Link
             key={car.id}
             href={`/backoffice/cars/${car.id}`}
@@ -41,6 +43,10 @@ export default function BackofficeCarsPage() {
             <span className="text-right text-zinc-300">{car.price.toLocaleString("pt-PT")} EUR</span>
           </Link>
         ))}
+
+        {cars.length === 0 ? (
+          <div className="px-6 py-10 text-sm text-zinc-400">Ainda nao tens viaturas registadas.</div>
+        ) : null}
       </div>
     </BackofficeShell>
   );

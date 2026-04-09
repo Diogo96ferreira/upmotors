@@ -1,9 +1,11 @@
 "use client";
 
 import { useActionState } from "react";
-import { loginBackoffice, initialBackofficeLoginState } from "@/app/backoffice/actions/auth";
+import { loginBackoffice, type BackofficeLoginState } from "@/app/backoffice/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const initialBackofficeLoginState: BackofficeLoginState = { error: "" };
 
 export function LoginForm({ disabled }: { disabled?: boolean }) {
   const [state, formAction] = useActionState(loginBackoffice, initialBackofficeLoginState);

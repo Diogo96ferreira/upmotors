@@ -1,23 +1,29 @@
 import Link from "next/link";
-import { mockCars, mockLeads, mockStats } from "@/app/backoffice/mock-data";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { StatCard } from "@/components/backoffice/stat-card";
+import { getAdminCars, getBackofficeStats, getLeadSubmissions } from "@/lib/backoffice-data";
 
-export default function BackofficeDashboardPage() {
-  const recentCars = mockCars.slice(0, 3);
-  const recentLeads = mockLeads.slice(0, 3);
+export default async function BackofficeDashboardPage() {
+  const [stats, cars, leads] = await Promise.all([
+    getBackofficeStats(),
+    getAdminCars(),
+    getLeadSubmissions(),
+  ]);
+
+  const recentCars = cars.slice(0, 5);
+  const recentLeads = leads.slice(0, 5);
 
   return (
     <BackofficeShell
       title="Dashboard"
-      description="Vista de demonstracao do backoffice com dados hardcoded."
+      description="Visao rapida do stock publicado e dos pedidos recebidos pela equipa."
     >
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Total viaturas" value={mockStats.totalCars} hint="Inventario total." />
-        <StatCard label="Disponiveis" value={mockStats.availableCars} hint="Prontas para venda." />
-        <StatCard label="Destaques" value={mockStats.featuredCars} hint="Com maior visibilidade." />
-        <StatCard label="Total leads" value={mockStats.totalLeads} hint="Pedidos recebidos." />
-        <StatCard label="Leads novas" value={mockStats.newLeads} hint="A aguardar tratamento." />
+        <StatCard label="Total viaturas" value={stats.totalCars} hint="Inventario total registado no catalogo." />
+        <StatCard label="Disponiveis" value={stats.availableCars} hint="Viaturas prontas para venda." />
+        <StatCard label="Destaques" value={stats.featuredCars} hint="Carros em evidencia na home." />
+        <StatCard label="Total leads" value={stats.totalLeads} hint="Pedidos recebidos por formulario." />
+        <StatCard label="Leads novas" value={stats.newLeads} hint="Pedidos ainda sem tratamento." />
       </div>
 
       <div className="mt-10 grid gap-8 xl:grid-cols-2">
@@ -55,6 +61,7 @@ export default function BackofficeDashboardPage() {
                 <p className="text-sm text-zinc-300">{car.price.toLocaleString("pt-PT")} EUR</p>
               </Link>
             ))}
+            {recentCars.length === 0 ? <p className="text-sm text-zinc-400">Ainda nao existem viaturas.</p> : null}
           </div>
         </section>
 
@@ -79,6 +86,7 @@ export default function BackofficeDashboardPage() {
                 <p className="mt-3 text-sm text-zinc-300">{lead.message}</p>
               </div>
             ))}
+            {recentLeads.length === 0 ? <p className="text-sm text-zinc-400">Ainda nao existem leads.</p> : null}
           </div>
         </section>
       </div>
