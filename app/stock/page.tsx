@@ -1,5 +1,6 @@
 import { StockCatalog } from "@/components/cars/stock-catalog";
 import { CTASection } from "@/components/ui/cta-section";
+import { EmptyState } from "@/components/ui/empty-state";
 import { HeroSection } from "@/components/ui/hero-section";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { getCars } from "@/lib/data";
@@ -18,7 +19,16 @@ export default async function StockPage() {
       />
 
       <SectionWrapper className="pt-16">
-        <StockCatalog cars={cars} />
+        {cars.length > 0 ? (
+          <StockCatalog cars={cars} />
+        ) : (
+          <EmptyState
+            eyebrow="Stock vazio"
+            title="Ainda não existem carros publicados"
+            description="A ligação ao Supabase já está ativa. Assim que a tabela `cars` tiver registos válidos, esta página passa a preencher automaticamente."
+            action={{ href: "/contact", label: "Falar com a equipa" }}
+          />
+        )}
       </SectionWrapper>
 
       <CTASection

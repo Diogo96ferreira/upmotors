@@ -1,3 +1,5 @@
+import { CarCategory } from "@/types/database";
+
 export type Car = {
   id: string;
   brand: string;
@@ -10,7 +12,7 @@ export type Car = {
   transmission: string;
   power_hp?: number;
   image: string;
-  category: "Performance" | "Classicos" | "SUV" | "Executive";
+  category: CarCategory;
   description: string;
   shortDescription: string;
   gallery: string[];

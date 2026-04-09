@@ -61,7 +61,15 @@ export function StockCatalog({ cars }: StockCatalogProps) {
               transition={{ duration: 0.28, ease: "easeOut" }}
               className="w-full"
             >
-              <CarGrid cars={filteredCars} />
+              <CarGrid
+                cars={filteredCars}
+                emptyState={{
+                  eyebrow: "Sem resultados",
+                  title: "Nenhuma viatura corresponde ao filtro",
+                  description:
+                    "Ajuste a categoria, a transmissão ou a ordenação para explorar o restante stock disponível.",
+                }}
+              />
             </motion.div>
           </AnimatePresence>
         </div>

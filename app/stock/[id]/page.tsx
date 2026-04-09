@@ -131,7 +131,19 @@ export default async function CarDetailPage({ params }: DetailPageProps) {
             </h2>
           </div>
         </div>
-        <CarGrid cars={similarCars} />
+        <CarGrid
+          cars={similarCars}
+          emptyState={{
+            eyebrow: "Sem sugestões",
+            title: "Ainda não existem viaturas relacionadas",
+            description:
+              "Quando houver mais unidades na mesma categoria no Supabase, esta secção será preenchida automaticamente.",
+            action: {
+              href: "/stock",
+              label: "Voltar ao stock",
+            },
+          }}
+        />
       </SectionWrapper>
     </>
   );

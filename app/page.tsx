@@ -79,7 +79,19 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <CarGrid cars={featuredCars} />
+        <CarGrid
+          cars={featuredCars}
+          emptyState={{
+            eyebrow: "Sem destaques",
+            title: "Ainda não existem viaturas em evidência",
+            description:
+              "Assim que marcar carros como destaque no Supabase, esta secção passa a mostrar a seleção principal do atelier.",
+            action: {
+              href: "/stock",
+              label: "Explorar stock",
+            },
+          }}
+        />
       </SectionWrapper>
 
       <SectionWrapper>
