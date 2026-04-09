@@ -3,12 +3,14 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Car } from "@/types/car";
+import { CarStatus } from "@/types/database";
 import { CarGrid } from "@/components/cars/car-grid";
 import { FiltersSidebar } from "@/components/cars/filters-sidebar";
 
 type Category = "Todos" | "Performance" | "Classicos" | "SUV" | "Executive";
 type Transmission = "Todos" | "Manual" | "Automático";
 type SortValue = "price-asc" | "price-desc" | "newest";
+type StatusValue = "Todos" | CarStatus;
 
 type StockCatalogProps = {
   cars: Car[];
@@ -16,32 +18,57 @@ type StockCatalogProps = {
 
 export function StockCatalog({ cars }: StockCatalogProps) {
   const [category, setCategory] = useState<Category>("Todos");
+  const [brand, setBrand] = useState("Todos");
+  const [fuel, setFuel] = useState("Todos");
+  const [status, setStatus] = useState<StatusValue>("Todos");
   const [transmission, setTransmission] = useState<Transmission>("Todos");
   const [sort, setSort] = useState<SortValue>("price-asc");
+  const [maxPrice, setMaxPrice] = useState(() =>
+    cars.length > 0 ? Math.max(...cars.map((car) => car.price)) : 0
+  );
+  const [minYear, setMinYear] = useState(() =>
+    cars.length > 0 ? Math.min(...cars.map((car) => car.year)) : new Date().getFullYear()
+  );
 
   const filteredCars = useMemo(() => {
     const nextCars = cars
       .filter((car) => (category === "Todos" ? true : car.category === category))
-      .filter((car) => (transmission === "Todos" ? true : car.transmission === transmission));
+      .filter((car) => (brand === "Todos" ? true : car.brand === brand))
+      .filter((car) => (fuel === "Todos" ? true : car.fuel === fuel))
+      .filter((car) => (status === "Todos" ? true : car.status === status))
+      .filter((car) => (transmission === "Todos" ? true : car.transmission === transmission))
+      .filter((car) => car.price <= maxPrice)
+      .filter((car) => car.year >= minYear);
 
     return nextCars.sort((a, b) => {
       if (sort === "price-desc") return b.price - a.price;
       if (sort === "newest") return b.year - a.year;
       return a.price - b.price;
     });
-  }, [cars, category, transmission, sort]);
+  }, [cars, category, brand, fuel, status, transmission, sort, maxPrice, minYear]);
 
-  const animationKey = `${category}-${transmission}-${sort}-${filteredCars.map((car) => car.id).join("-")}`;
+  const animationKey = `${category}-${brand}-${fuel}-${status}-${transmission}-${sort}-${maxPrice}-${minYear}-${filteredCars.map((car) => car.id).join("-")}`;
 
   return (
     <div className="grid gap-12 lg:grid-cols-[260px_minmax(0,1fr)]">
       <FiltersSidebar
+        cars={cars}
         category={category}
+        brand={brand}
+        fuel={fuel}
+        status={status}
         transmission={transmission}
         sort={sort}
+        maxPrice={maxPrice}
+        minYear={minYear}
         onCategoryChange={setCategory}
+        onBrandChange={setBrand}
+        onFuelChange={setFuel}
+        onStatusChange={setStatus}
         onTransmissionChange={setTransmission}
         onSortChange={setSort}
+        onMaxPriceChange={setMaxPrice}
+        onMinYearChange={setMinYear}
       />
 
       <div className="space-y-8">
@@ -67,7 +94,7 @@ export function StockCatalog({ cars }: StockCatalogProps) {
                   eyebrow: "Sem resultados",
                   title: "Nenhuma viatura corresponde ao filtro",
                   description:
-                    "Ajuste a categoria, a transmissão ou a ordenação para explorar o restante stock disponível.",
+                    "Ajuste os critérios para explorar o restante stock disponível.",
                 }}
               />
             </motion.div>
