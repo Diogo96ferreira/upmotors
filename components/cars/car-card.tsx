@@ -12,12 +12,12 @@ type CarCardProps = {
 export function CarCard({ car }: CarCardProps) {
   return (
     <motion.article whileHover={{ scale: 1.015, y: -6 }} transition={{ duration: 0.25 }} className="group">
-      <Link href={`/stock/${car.id}`} className="block overflow-hidden border border-white/8 bg-zinc-950">
+      <Link href={`/stock/${car.slug}`} className="block overflow-hidden border border-white/8 bg-zinc-950">
         <div className="aspect-[4/3] overflow-hidden">
           <img
             src={car.image}
             alt={`${car.brand} ${car.model}`}
-            className="h-full w-full object-cover grayscale transition duration-700 group-hover:scale-105 group-hover:grayscale-0"
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
           />
         </div>
 

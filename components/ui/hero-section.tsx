@@ -31,7 +31,7 @@ export function HeroSection({
         compact ? "min-h-[65svh] pt-24" : "min-h-[92svh] pt-24"
       )}
     >
-      <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover grayscale" />
+      <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-black/45" />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 

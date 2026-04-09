@@ -3,7 +3,7 @@ import { CarGallery } from "@/components/cars/car-gallery";
 import { Button } from "@/components/ui/button";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { CarGrid } from "@/components/cars/car-grid";
-import { getCarById, getSimilarCars } from "@/lib/data";
+import { getCarBySlug, getSimilarCars } from "@/lib/data";
 import { formatMileage, formatPrice } from "@/lib/utils";
 
 type DetailPageProps = {
@@ -12,7 +12,7 @@ type DetailPageProps = {
 
 export default async function CarDetailPage({ params }: DetailPageProps) {
   const { id } = await params;
-  const car = await getCarById(id);
+  const car = await getCarBySlug(id);
 
   if (!car) {
     notFound();

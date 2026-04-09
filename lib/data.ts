@@ -1,10 +1,37 @@
 import { supabase } from "@/lib/supabase";
 import { Car } from "@/types/car";
-import { CarRow } from "@/types/database";
+import { CarImageRow, CarRow } from "@/types/database";
+
+const CARS_SELECT = `
+  *,
+  car_images (
+    id,
+    url,
+    is_feature,
+    position,
+    alt_text
+  )
+`;
+
+function sortCarImages(images: CarImageRow[] = []) {
+  return [...images].sort((a, b) => (a.position ?? 9999) - (b.position ?? 9999));
+}
 
 function normalizeCar(row: CarRow): Car {
+  const sortedImages = sortCarImages(row.car_images ?? []);
+  const featureImage =
+    sortedImages.find((image) => image.is_feature) ?? sortedImages[0];
+  const orderedGallery = sortedImages.map((image) => image.url);
+  const fallbackGallery = row.gallery ?? [];
+  const image = featureImage?.url ?? orderedGallery[0] ?? row.image ?? "";
+  const rawGallery = orderedGallery.length > 0 ? orderedGallery : fallbackGallery;
+  const gallery = Array.from(
+    new Set(rawGallery.filter((galleryImage) => galleryImage && galleryImage !== image))
+  );
+
   return {
     id: row.id,
+    slug: row.slug,
     brand: row.brand,
     model: row.model,
     version: row.version ?? undefined,
@@ -14,12 +41,12 @@ function normalizeCar(row: CarRow): Car {
     fuel: row.fuel,
     transmission: row.transmission,
     power_hp: row.power_hp ?? undefined,
-    image: row.image,
+    image,
     category: row.category,
     description: row.description,
     shortDescription:
       row.shortDescription ?? "Viatura disponível para consulta com dossier técnico detalhado.",
-    gallery: row.gallery ?? [],
+    gallery,
     highlight:
       row.highlight ?? "Curadoria técnica concluída pela equipa Up Motors com foco em transparência.",
     monthlyLabel: row.monthlyLabel ?? undefined,
@@ -42,7 +69,7 @@ export async function getCars(): Promise<Car[]> {
 
   const { data, error } = await supabase
     .from("cars")
-    .select("*")
+    .select(CARS_SELECT)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -54,66 +81,71 @@ export async function getCars(): Promise<Car[]> {
 }
 
 export async function getFeaturedCars() {
-  if (!supabase) {
-    return [];
+  const cars = await getCars();
+  const featuredCars = cars.filter((car) => car.featured).slice(0, 3);
+
+  if (featuredCars.length > 0) {
+    return featuredCars;
   }
 
-  const { data, error } = await supabase
-    .from("cars")
-    .select("*")
-    .eq("featured", true)
-    .order("created_at", { ascending: false })
-    .limit(3);
-
-  if (error) {
-    console.error("Erro ao carregar destaques:", error);
-    return [];
-  }
-
-  return ((data ?? []) as CarRow[]).map(normalizeCar);
+  return cars.slice(0, 3);
 }
 
-export async function getCarById(id: string) {
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
+export async function getCarBySlug(slugOrId: string) {
   if (!supabase) {
     return null;
   }
 
-  const { data, error } = await supabase.from("cars").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("cars")
+    .select(CARS_SELECT)
+    .eq("slug", slugOrId)
+    .maybeSingle();
 
   if (error) {
     console.error("Erro ao carregar detalhe do carro:", error);
     return null;
   }
 
-  return data ? normalizeCar(data as CarRow) : null;
+  if (data) {
+    return normalizeCar(data as CarRow);
+  }
+
+  if (!isUuid(slugOrId)) {
+    return null;
+  }
+
+  const fallback = await supabase.from("cars").select(CARS_SELECT).eq("id", slugOrId).maybeSingle();
+
+  if (fallback.error) {
+    console.error("Erro ao carregar detalhe do carro:", fallback.error);
+    return null;
+  }
+
+  return fallback.data ? normalizeCar(fallback.data as CarRow) : null;
 }
 
-export async function getSimilarCars(id: string) {
-  const currentCar = await getCarById(id);
+export async function getSimilarCars(slugOrId: string) {
+  const currentCar = await getCarBySlug(slugOrId);
 
-  if (!currentCar || !supabase) {
+  if (!currentCar) {
     return [];
-  }
-
-  const { data, error } = await supabase
-    .from("cars")
-    .select("*")
-    .eq("category", currentCar.category)
-    .neq("id", id)
-    .order("created_at", { ascending: false })
-    .limit(3);
-
-  if (error) {
-    console.error("Erro ao carregar carros similares:", error);
-    return [];
-  }
-
-  const sameCategory = ((data ?? []) as CarRow[]).map(normalizeCar);
-
-  if (sameCategory.length > 0) {
-    return sameCategory;
   }
 
   const fallbackCars = await getCars();
-  return fallbackCars.filter((car) => car.id !== id).slice(0, 3);
+  const sameBrand = fallbackCars
+    .filter((car) => car.id !== currentCar.id && car.brand === currentCar.brand)
+    .slice(0, 3);
+
+  if (sameBrand.length > 0) {
+    return sameBrand;
+  }
+
+  return fallbackCars.filter((car) => car.id !== currentCar.id).slice(0, 3);
 }

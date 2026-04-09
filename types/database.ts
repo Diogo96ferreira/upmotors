@@ -1,7 +1,16 @@
 export type CarCategory = "Performance" | "Classicos" | "SUV" | "Executive";
 
+export type CarImageRow = {
+  id: string;
+  url: string;
+  is_feature: boolean | null;
+  position: number | null;
+  alt_text: string | null;
+};
+
 export type CarRow = {
   id: string;
+  slug: string;
   brand: string;
   model: string;
   version: string | null;
@@ -11,7 +20,7 @@ export type CarRow = {
   fuel: string;
   transmission: string;
   power_hp: number | null;
-  image: string;
+  image: string | null;
   category: CarCategory;
   description: string;
   shortDescription: string | null;
@@ -25,7 +34,8 @@ export type CarRow = {
     acceleration?: string;
     exterior?: string;
     interior?: string;
-    location?: string;
+      location?: string;
   } | null;
   created_at: string;
+  car_images?: CarImageRow[] | null;
 };

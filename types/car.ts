@@ -2,6 +2,7 @@ import { CarCategory } from "@/types/database";
 
 export type Car = {
   id: string;
+  slug: string;
   brand: string;
   model: string;
   version?: string;

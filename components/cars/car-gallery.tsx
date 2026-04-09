@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,8 @@ type CarGalleryProps = {
 export function CarGallery({ images, altBase }: CarGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const featuredImage = images[0];
+  const additionalImages = images.slice(1);
 
   useEffect(() => {
     if (!lightboxOpen) {
@@ -58,38 +61,45 @@ export function CarGallery({ images, altBase }: CarGalleryProps) {
 
         <button
           type="button"
-          onClick={() => setLightboxOpen(true)}
+          onClick={() => {
+            setActiveIndex(0);
+            setLightboxOpen(true);
+          }}
           className="block w-full overflow-hidden border border-white/8 bg-zinc-950 text-left"
         >
           <img
-            src={currentImage}
+            src={featuredImage}
             alt={`${altBase} vista principal`}
-            className="aspect-[16/10] h-full w-full object-cover grayscale transition duration-700 hover:grayscale-0"
+            className="aspect-[16/10] h-full w-full object-cover transition duration-700"
           />
         </button>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {images.map((image, index) => (
-            <button
-              key={image}
-              type="button"
-              onClick={() => {
-                setActiveIndex(index);
-                setLightboxOpen(true);
-              }}
-              className={cn(
-                "overflow-hidden border bg-zinc-950 text-left transition",
-                index === activeIndex ? "border-white/40" : "border-white/8 hover:border-white/20"
-              )}
-            >
-              <img
-                src={image}
-                alt={`${altBase} galeria ${index + 1}`}
-                className="aspect-[16/10] h-full w-full object-cover grayscale transition duration-700 hover:grayscale-0"
-              />
-            </button>
-          ))}
-        </div>
+        {additionalImages.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {additionalImages.map((image, index) => (
+              <button
+                key={image}
+                type="button"
+                onClick={() => {
+                  setActiveIndex(index + 1);
+                  setLightboxOpen(true);
+                }}
+                className={cn(
+                  "overflow-hidden border bg-zinc-950 text-left transition",
+                  activeIndex === index + 1
+                    ? "border-white/40"
+                    : "border-white/8 hover:border-white/20"
+                )}
+              >
+                <img
+                  src={image}
+                  alt={`${altBase} galeria ${index + 2}`}
+                  className="aspect-[16/10] h-full w-full object-cover transition duration-700"
+                />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {lightboxOpen ? (
@@ -113,11 +123,20 @@ export function CarGallery({ images, altBase }: CarGalleryProps) {
           </button>
 
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-            <img
-              src={currentImage}
-              alt={`${altBase} ampliada ${activeIndex + 1}`}
-              className="max-h-[78svh] w-full object-contain"
-            />
+            <div className="relative min-h-[50svh]">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentImage}
+                  src={currentImage}
+                  alt={`${altBase} ampliada ${activeIndex + 1}`}
+                  initial={{ opacity: 0, scale: 0.985, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 1.01, y: -10 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                  className="max-h-[78svh] w-full object-contain"
+                />
+              </AnimatePresence>
+            </div>
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm uppercase tracking-[0.24em] text-zinc-400">
                 {activeIndex + 1} / {images.length}
