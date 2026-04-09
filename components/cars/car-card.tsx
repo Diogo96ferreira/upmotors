@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Car } from "@/types/car";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { formatMileage, formatPrice } from "@/lib/utils";
 
 type CarCardProps = {
@@ -24,7 +25,10 @@ export function CarCard({ car }: CarCardProps) {
         <div className="space-y-5 p-6">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-500">{car.category}</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-500">{car.category}</p>
+                <StatusBadge status={car.status} />
+              </div>
               <h3 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-bold uppercase tracking-tight">
                 {car.brand} {car.model}
               </h3>

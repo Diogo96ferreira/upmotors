@@ -3,6 +3,7 @@ import { CarGallery } from "@/components/cars/car-gallery";
 import { Button } from "@/components/ui/button";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { CarGrid } from "@/components/cars/car-grid";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { getCarBySlug, getSimilarCars } from "@/lib/data";
 import { formatMileage, formatPrice } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ export default async function CarDetailPage({ params }: DetailPageProps) {
         <div className="container-shell relative z-10 flex min-h-[85svh] flex-col justify-end pb-16">
           <div className="mb-5 flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.28em] text-zinc-300">
             <span className="border border-white/20 px-3 py-1">{car.category}</span>
+            <StatusBadge status={car.status} />
             <span>Ref. {car.id}</span>
           </div>
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">

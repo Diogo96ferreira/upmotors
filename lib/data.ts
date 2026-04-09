@@ -51,6 +51,7 @@ function normalizeCar(row: CarRow): Car {
       row.highlight ?? "Curadoria técnica concluída pela equipa Up Motors com foco em transparência.",
     monthlyLabel: row.monthlyLabel ?? undefined,
     featured: row.featured ?? false,
+    status: row.status,
     specs: {
       engine: row.specs?.engine ?? "Por validar",
       drivetrain: row.specs?.drivetrain ?? "Por validar",

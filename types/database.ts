@@ -1,4 +1,5 @@
 export type CarCategory = "Performance" | "Classicos" | "SUV" | "Executive";
+export type CarStatus = "draft" | "available" | "reserved" | "sold";
 
 export type CarImageRow = {
   id: string;
@@ -28,6 +29,7 @@ export type CarRow = {
   highlight: string | null;
   monthlyLabel: string | null;
   featured: boolean | null;
+  status: CarStatus;
   specs: {
     engine?: string;
     drivetrain?: string;

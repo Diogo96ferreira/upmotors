@@ -1,4 +1,4 @@
-import { CarCategory } from "@/types/database";
+import { CarCategory, CarStatus } from "@/types/database";
 
 export type Car = {
   id: string;
@@ -20,6 +20,7 @@ export type Car = {
   highlight: string;
   monthlyLabel?: string;
   featured?: boolean;
+  status: CarStatus;
   specs: {
     engine: string;
     drivetrain: string;
