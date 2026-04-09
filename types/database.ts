@@ -36,7 +36,7 @@ export type CarRow = {
     acceleration?: string;
     exterior?: string;
     interior?: string;
-      location?: string;
+    location?: string;
   } | null;
   created_at: string;
   car_images?: CarImageRow[] | null;

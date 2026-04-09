@@ -41,8 +41,8 @@ export default function SellPage() {
               Rigor técnico, proposta clara
             </h2>
             <p className="max-w-xl text-lg leading-8 text-zinc-400">
-              Cada viatura é tratada como um ativo com contexto próprio. O fluxo já está separado
-              da interface, o que facilita integração posterior com Supabase ou backoffice.
+              Cada viatura é tratada como um ativo com contexto próprio. O fluxo já está separado da
+              interface, o que facilita integração posterior com Supabase ou backoffice.
             </p>
             <div className="space-y-4">
               {steps.map((step) => (
