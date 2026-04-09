@@ -14,7 +14,10 @@ export function CarCard({ car }: CarCardProps) {
   return (
     <motion.article whileHover={{ scale: 1.015, y: -6 }} transition={{ duration: 0.25 }} className="group">
       <Link href={`/stock/${car.slug}`} className="block overflow-hidden border border-white/8 bg-zinc-950">
-        <div className="aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <div className="absolute left-4 top-4 z-10">
+            <StatusBadge status={car.status} />
+          </div>
           <img
             src={car.image}
             alt={`${car.brand} ${car.model}`}
@@ -25,10 +28,7 @@ export function CarCard({ car }: CarCardProps) {
         <div className="space-y-5 p-6">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-500">{car.category}</p>
-                <StatusBadge status={car.status} />
-              </div>
+              <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-500">{car.category}</p>
               <h3 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-bold uppercase tracking-tight">
                 {car.brand} {car.model}
               </h3>
