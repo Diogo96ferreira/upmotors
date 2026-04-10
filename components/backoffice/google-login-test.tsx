@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type SessionUser = {
   email?: string;
@@ -15,6 +15,8 @@ export function GoogleLoginTest() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+
     if (!supabase) {
       setError("Supabase nao esta configurado no frontend.");
       setLoading(false);
@@ -54,6 +56,8 @@ export function GoogleLoginTest() {
   }, []);
 
   async function handleGoogleLogin() {
+    const supabase = createSupabaseBrowserClient();
+
     if (!supabase) {
       setError("Supabase nao esta configurado no frontend.");
       return;
@@ -74,6 +78,8 @@ export function GoogleLoginTest() {
   }
 
   async function handleLogout() {
+    const supabase = createSupabaseBrowserClient();
+
     if (!supabase) {
       return;
     }
@@ -88,22 +94,13 @@ export function GoogleLoginTest() {
   return (
     <div className="space-y-6 border border-white/10 bg-zinc-950 p-10">
       <div className="space-y-3 text-center">
-        <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">Teste rapido</p>
+        <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">Backoffice</p>
         <h1 className="font-[family-name:var(--font-heading)] text-4xl font-bold uppercase tracking-tight">
-          Login com Google
+          Entrar com Google
         </h1>
         <p className="text-zinc-400">
-          Este teste confirma se o OAuth com Google abre, autentica e volta ao frontend com sessao.
+          Acesso ao backoffice protegido por sessao Supabase.
         </p>
-      </div>
-
-      <div className="space-y-4 border border-white/10 bg-black/30 p-6 text-left">
-        <p className="text-sm text-zinc-300">Fluxo esperado:</p>
-        <ol className="space-y-2 text-sm text-zinc-400">
-          <li>1. Clicar em "Entrar com Google"</li>
-          <li>2. Fazer login na conta Google</li>
-          <li>3. Voltar a esta pagina autenticado</li>
-        </ol>
       </div>
 
       <div className="space-y-4 text-center">

@@ -2,8 +2,11 @@ import Link from "next/link";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { StatCard } from "@/components/backoffice/stat-card";
 import { getAdminCars, getBackofficeStats, getLeadSubmissions } from "@/lib/backoffice-data";
+import { requireBackofficeUser } from "@/lib/backoffice-session";
 
 export default async function BackofficeDashboardPage() {
+  await requireBackofficeUser();
+
   const [stats, cars, leads] = await Promise.all([
     getBackofficeStats(),
     getAdminCars(),

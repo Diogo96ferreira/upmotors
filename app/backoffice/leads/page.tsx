@@ -2,10 +2,12 @@ import { updateLeadStatus } from "@/app/backoffice/actions/admin";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { Select } from "@/components/ui/select";
 import { getLeadSubmissions } from "@/lib/backoffice-data";
+import { requireBackofficeUser } from "@/lib/backoffice-session";
 
 const leadStatuses = ["new", "contacted", "closed"] as const;
 
 export default async function BackofficeLeadsPage() {
+  await requireBackofficeUser();
   const leads = await getLeadSubmissions();
 
   return (

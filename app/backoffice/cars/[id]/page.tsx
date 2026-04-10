@@ -2,12 +2,15 @@ import { notFound } from "next/navigation";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { CarForm } from "@/components/backoffice/car-form";
 import { getAdminCarById } from "@/lib/backoffice-data";
+import { requireBackofficeUser } from "@/lib/backoffice-session";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
 export default async function EditCarPage({ params }: Props) {
+  await requireBackofficeUser();
+
   const { id } = await params;
   const car = await getAdminCarById(id);
 

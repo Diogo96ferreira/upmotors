@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { getAdminCars } from "@/lib/backoffice-data";
+import { requireBackofficeUser } from "@/lib/backoffice-session";
 
 export default async function BackofficeCarsPage() {
+  await requireBackofficeUser();
   const cars = await getAdminCars();
 
   return (
