@@ -36,7 +36,13 @@ export function MfaEnroll() {
         return;
       }
 
-      if (aal.data.currentLevel === "aal2") {
+      if (aal.error) {
+        setError(aal.error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (aal.data?.currentLevel === "aal2") {
         window.location.href = "/backoffice";
         return;
       }
@@ -129,7 +135,8 @@ export function MfaEnroll() {
           Configurar Google Authenticator
         </h1>
         <p className="text-zinc-400">
-          Faz scan do QR code com a app e confirma o codigo de 6 digitos para ativar o acesso ao backoffice.
+          Faz a ligacao da tua conta a uma app Authenticator e confirma o codigo de 6 digitos
+          para ativar o acesso seguro ao backoffice.
         </p>
       </div>
 
@@ -137,9 +144,43 @@ export function MfaEnroll() {
 
       {state ? (
         <>
+          <div className="space-y-5 border border-white/10 bg-black/20 p-6">
+            <div className="space-y-2 border-b border-white/10 pb-5">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Passo 1</p>
+              <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-100">
+                Abrir a app
+              </h2>
+              <p className="text-sm leading-6 text-zinc-400">
+                Abre o Google Authenticator no telemovel e escolhe adicionar uma nova conta.
+              </p>
+            </div>
+            <div className="space-y-2 border-b border-white/10 pb-5">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Passo 2</p>
+              <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-100">
+                Fazer scan
+              </h2>
+              <p className="text-sm leading-6 text-zinc-400">
+                Faz scan do QR code abaixo. Se nao resultar, copia o segredo manual e adiciona-o
+                na app.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Passo 3</p>
+              <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-100">
+                Confirmar codigo
+              </h2>
+              <p className="text-sm leading-6 text-zinc-400">
+                Introduz o codigo de 6 digitos que a app gerar neste momento e conclui a ativacao.
+              </p>
+            </div>
+          </div>
+
           <div className="space-y-4 border border-white/10 bg-black/30 p-6 text-center">
             <img src={state.qrCode} alt="QR code MFA" className="mx-auto h-56 w-56 bg-white p-3" />
-            <p className="text-sm text-zinc-400">Se nao conseguires fazer scan, usa este segredo:</p>
+            <p className="text-sm text-zinc-400">
+              Se nao conseguires fazer scan, escolhe a opcao de introducao manual na app e usa
+              este segredo:
+            </p>
             <code className="block break-all text-sm text-zinc-200">{state.secret}</code>
           </div>
 
@@ -148,6 +189,11 @@ export function MfaEnroll() {
               <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Codigo de 6 digitos</span>
               <Input value={code} onChange={(event) => setCode(event.target.value)} placeholder="123456" required />
             </label>
+
+            <p className="text-sm leading-6 text-zinc-400">
+              O codigo muda de poucos em poucos segundos. Se der erro, espera pelo proximo codigo
+              e tenta novamente.
+            </p>
 
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "A validar" : "Ativar 2FA"}

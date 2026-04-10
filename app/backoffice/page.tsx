@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { StatCard } from "@/components/backoffice/stat-card";
 import { getAdminCars, getBackofficeStats, getLeadSubmissions } from "@/lib/backoffice-data";
+import { getCarStatusLabel, getLeadStatusLabel } from "@/lib/labels";
 import { requireBackofficeUser } from "@/lib/backoffice-session";
 
 export default async function BackofficeDashboardPage() {
@@ -58,7 +59,7 @@ export default async function BackofficeDashboardPage() {
                     {car.brand} {car.model}
                   </p>
                   <p className="text-sm text-zinc-400">
-                    {car.year} | {car.status} | {car.slug}
+                    {car.year} | {getCarStatusLabel(car.status)} | {car.slug}
                   </p>
                 </div>
                 <p className="text-sm text-zinc-300">{car.price.toLocaleString("pt-PT")} EUR</p>
@@ -81,10 +82,12 @@ export default async function BackofficeDashboardPage() {
               <div key={lead.id} className="border border-white/10 p-4">
                 <div className="flex items-center justify-between gap-4">
                   <p className="font-medium text-white">{lead.name}</p>
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">{lead.status}</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
+                    {getLeadStatusLabel(lead.status)}
+                  </p>
                 </div>
                 <p className="mt-2 text-sm text-zinc-400">
-                  {lead.form_type} | {lead.email}
+                  {lead.form_type === "sell" ? "Venda" : "Contacto"} | {lead.email}
                 </p>
                 <p className="mt-3 text-sm text-zinc-300">{lead.message}</p>
               </div>

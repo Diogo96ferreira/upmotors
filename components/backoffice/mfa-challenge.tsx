@@ -30,7 +30,13 @@ export function MfaChallenge() {
         return;
       }
 
-      if (aal.data.currentLevel === "aal2") {
+      if (aal.error) {
+        setError(aal.error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (aal.data?.currentLevel === "aal2") {
         window.location.href = "/backoffice";
         return;
       }

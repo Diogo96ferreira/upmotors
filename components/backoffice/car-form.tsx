@@ -1,19 +1,68 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { saveCar, type CarFormState } from "@/app/backoffice/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CarRow } from "@/types/database";
+import { useToast } from "@/components/ui/toast-provider";
+import { CarImageRow, CarRow } from "@/types/database";
+import { useFormStatus } from "react-dom";
 
 const categories = ["Performance", "Classicos", "SUV", "Executive"] as const;
 const statuses = ["draft", "available", "reserved", "sold"] as const;
 const initialCarFormState: CarFormState = { error: "" };
 
+function sortImages(images: CarImageRow[] = []) {
+  return [...images].sort((a, b) => (a.position ?? 9999) - (b.position ?? 9999));
+}
+
 export function CarForm({ car }: { car?: CarRow | null }) {
   const [state, formAction] = useActionState(saveCar, initialCarFormState);
+  const router = useRouter();
+  const { toast } = useToast();
+  const [featuredFileName, setFeaturedFileName] = useState("");
+  const [galleryFileNames, setGalleryFileNames] = useState<string[]>([]);
+  const handledStateRef = useRef<string>("");
+
+  const sortedImages = useMemo(() => sortImages(car?.car_images ?? []), [car?.car_images]);
+  const featuredImage = sortedImages.find((image) => image.is_feature) ?? sortedImages[0] ?? null;
+  const galleryImages = sortedImages.filter((image) => image.id !== featuredImage?.id);
+
+  useEffect(() => {
+    const stateKey = `${state.success ?? ""}|${state.error}|${state.redirectTo ?? ""}`;
+
+    if (!stateKey || stateKey === "||" || handledStateRef.current === stateKey) {
+      return;
+    }
+
+    handledStateRef.current = stateKey;
+
+    if (state.error) {
+      toast({
+        title: "Nao foi possivel guardar",
+        description: state.error,
+        variant: "error",
+      });
+      return;
+    }
+
+    if (state.success) {
+      toast({
+        title: "Operacao concluida",
+        description: state.success,
+        variant: "success",
+      });
+    }
+
+    if (state.redirectTo) {
+      window.setTimeout(() => {
+        router.push(state.redirectTo!);
+      }, 450);
+    }
+  }, [router, state.error, state.redirectTo, state.success, toast]);
 
   return (
     <form action={formAction} className="space-y-10">
@@ -81,11 +130,9 @@ export function CarForm({ car }: { car?: CarRow | null }) {
           </Select>
         </label>
         <label className="space-y-2 lg:col-span-2">
-          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Imagem principal</span>
-          <Input name="image" defaultValue={car?.image ?? ""} />
-        </label>
-        <label className="space-y-2 lg:col-span-2">
-          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Descricao curta</span>
+          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+            Descricao curta
+          </span>
           <Textarea name="shortDescription" defaultValue={car?.shortDescription ?? ""} />
         </label>
         <label className="space-y-2 lg:col-span-2">
@@ -96,16 +143,10 @@ export function CarForm({ car }: { car?: CarRow | null }) {
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Highlight</span>
           <Textarea name="highlight" defaultValue={car?.highlight ?? ""} />
         </label>
-        <label className="space-y-2 lg:col-span-2">
-          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Galeria</span>
-          <Textarea
-            name="gallery"
-            defaultValue={car?.gallery?.join("\n") ?? ""}
-            placeholder="Uma URL por linha"
-          />
-        </label>
         <label className="space-y-2">
-          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Label mensalidade</span>
+          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+            Label mensalidade
+          </span>
           <Input name="monthlyLabel" defaultValue={car?.monthlyLabel ?? ""} />
         </label>
         <label className="flex items-center gap-3 pt-8 text-sm text-zinc-300">
@@ -117,6 +158,87 @@ export function CarForm({ car }: { car?: CarRow | null }) {
           />
           Marcar como destaque
         </label>
+      </section>
+
+      <section className="grid gap-8 border border-white/10 bg-zinc-950 p-8 lg:grid-cols-2">
+        <div className="space-y-4 lg:col-span-2">
+          <div className="space-y-2">
+            <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+              Imagem principal
+            </span>
+            <Input
+              name="featuredImage"
+              type="file"
+              accept="image/*"
+              required={!car}
+              onChange={(event) =>
+                setFeaturedFileName(event.target.files?.[0]?.name ?? "")
+              }
+            />
+            <p className="text-sm leading-6 text-zinc-400">
+              Faz upload de uma unica imagem principal. Ao editar, um novo upload substitui a
+              principal atual.
+            </p>
+            {featuredFileName ? <p className="text-sm text-zinc-200">{featuredFileName}</p> : null}
+          </div>
+
+          {featuredImage ? (
+            <div className="space-y-3 border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+                Imagem principal atual
+              </p>
+              <img
+                src={featuredImage.url}
+                alt={featuredImage.alt_text ?? `${car?.brand} ${car?.model}`}
+                className="h-56 w-full object-cover"
+              />
+            </div>
+          ) : null}
+        </div>
+
+        <div className="space-y-4 lg:col-span-2">
+          <div className="space-y-2">
+            <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Galeria</span>
+            <Input
+              name="galleryImages"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) =>
+                setGalleryFileNames(Array.from(event.target.files ?? []).map((file) => file.name))
+              }
+            />
+            <p className="text-sm leading-6 text-zinc-400">
+              Faz upload de multiplas imagens adicionais. Novos uploads sao acrescentados a galeria
+              existente.
+            </p>
+            {galleryFileNames.length > 0 ? (
+              <ul className="space-y-1 text-sm text-zinc-200">
+                {galleryFileNames.map((fileName) => (
+                  <li key={fileName}>{fileName}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+
+          {galleryImages.length > 0 ? (
+            <div className="space-y-3 border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+                Galeria atual
+              </p>
+              <div className="grid gap-4 md:grid-cols-3">
+                {galleryImages.map((image) => (
+                  <img
+                    key={image.id}
+                    src={image.url}
+                    alt={image.alt_text ?? `${car?.brand} ${car?.model}`}
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <section className="grid gap-8 border border-white/10 bg-zinc-950 p-8 lg:grid-cols-2">
@@ -133,7 +255,9 @@ export function CarForm({ car }: { car?: CarRow | null }) {
           <Input name="spec_acceleration" defaultValue={car?.specs?.acceleration ?? ""} />
         </label>
         <label className="space-y-2">
-          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Cor exterior</span>
+          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+            Cor exterior
+          </span>
           <Input name="spec_exterior" defaultValue={car?.specs?.exterior ?? ""} />
         </label>
         <label className="space-y-2">
@@ -149,8 +273,24 @@ export function CarForm({ car }: { car?: CarRow | null }) {
       {state.error ? <p className="text-sm text-rose-300">{state.error}</p> : null}
 
       <div className="flex justify-end">
-        <Button type="submit">{car ? "Guardar viatura" : "Criar viatura"}</Button>
+        <SubmitButton hasExistingCar={Boolean(car)} />
       </div>
     </form>
+  );
+}
+
+function SubmitButton({ hasExistingCar }: { hasExistingCar: boolean }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending
+        ? hasExistingCar
+          ? "A guardar..."
+          : "A criar..."
+        : hasExistingCar
+          ? "Guardar viatura"
+          : "Criar viatura"}
+    </Button>
   );
 }

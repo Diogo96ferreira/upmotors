@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { getAdminCars } from "@/lib/backoffice-data";
+import { getCarStatusLabel } from "@/lib/labels";
 import { requireBackofficeUser } from "@/lib/backoffice-session";
 
 export default async function BackofficeCarsPage() {
@@ -41,7 +42,7 @@ export default async function BackofficeCarsPage() {
             </span>
             <span className="truncate text-zinc-400">{car.slug}</span>
             <span className="text-zinc-300">{car.year}</span>
-            <span className="text-zinc-300">{car.status}</span>
+            <span className="text-zinc-300">{getCarStatusLabel(car.status)}</span>
             <span className="text-right text-zinc-300">{car.price.toLocaleString("pt-PT")} EUR</span>
           </Link>
         ))}

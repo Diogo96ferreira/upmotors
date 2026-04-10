@@ -1,34 +1,47 @@
+import type { Metadata } from "next";
 import { Gauge, ShieldCheck, Wallet } from "lucide-react";
 import { ContactForm } from "@/components/ui/contact-form";
 import { CTASection } from "@/components/ui/cta-section";
 import { HeroSection } from "@/components/ui/hero-section";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
+import { getSellMetaDescription } from "@/lib/seo";
 
 const steps = [
   {
     icon: ShieldCheck,
     title: "Avaliação especializada",
-    description: "Inspeção técnica detalhada e leitura de mercado com foco em viaturas premium.",
+    description:
+      "Fazemos leitura técnica da viatura, enquadramento de mercado e validação do estado geral para uma proposta mais justa.",
   },
   {
     icon: Wallet,
-    title: "Valor real",
-    description: "Proposta transparente, sustentada por histórico, estado e liquidez do modelo.",
+    title: "Valor real de mercado",
+    description:
+      "Recebe uma proposta transparente e sustentada por procura, estado, configuração e liquidez do modelo.",
   },
   {
     icon: Gauge,
     title: "Processo ágil",
-    description: "Estrutura pronta para integrar aprovação, documentos e backoffice operacional.",
+    description:
+      "Tratamos o contacto com rapidez para que vender o seu carro em Coimbra seja simples, claro e bem acompanhado.",
   },
 ];
+
+export const metadata: Metadata = {
+  title: "Vender Carro em Coimbra | Avaliação Up Motors",
+  description: getSellMetaDescription(),
+  alternates: {
+    canonical: "/sell",
+  },
+};
 
 export default function SellPage() {
   return (
     <>
       <HeroSection
-        eyebrow="Processo de excelência"
-        title="Venda o seu carro com confiança"
-        description="Transformámos a página de avaliação numa experiência modular, pronta para ligação a formulários persistentes, scoring e automação."
+        eyebrow="Vender carro em Coimbra"
+        title="Venda o seu carro com confiança em Coimbra"
+        description="Se quer vender o seu carro em Coimbra, a Up Motors faz avaliação técnica, proposta transparente e acompanhamento próximo. Ideal para viaturas usadas, seminovas e propostas com perfil premium."
         image="https://images.unsplash.com/photo-1489824904134-891ab64532f1?auto=format&fit=crop&w=1600&q=80"
         compact
       />
@@ -37,22 +50,24 @@ export default function SellPage() {
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="space-y-6">
             <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">Como funciona</p>
-            <h2 className="font-[family-name:var(--font-heading)] text-4xl font-bold uppercase tracking-tight">
-              Rigor técnico, proposta clara
-            </h2>
+            <h1 className="font-[family-name:var(--font-heading)] text-4xl font-bold uppercase tracking-tight">
+              Rigor técnico e proposta clara
+            </h1>
             <p className="max-w-xl text-lg leading-8 text-zinc-400">
-              Cada viatura é tratada como um ativo com contexto próprio. O fluxo já está separado da
-              interface, o que facilita integração posterior com Supabase ou backoffice.
+              Para além de vender carros usados em Coimbra, a Up Motors também ajuda proprietários
+              que procuram uma avaliação séria, rápida e bem explicada. O objetivo é reduzir
+              fricção e criar uma experiência de confiança, desde o primeiro contacto até à
+              conclusão do processo.
             </p>
             <div className="space-y-4">
               {steps.map((step) => (
-                <div key={step.title} className="border border-white/8 bg-zinc-950 p-6">
+                <article key={step.title} className="border border-white/8 bg-zinc-950 p-6">
                   <step.icon className="h-5 w-5 text-zinc-300" />
-                  <h3 className="mt-4 font-[family-name:var(--font-heading)] text-2xl font-bold uppercase tracking-tight">
+                  <h2 className="mt-4 font-[family-name:var(--font-heading)] text-2xl font-bold uppercase tracking-tight">
                     {step.title}
-                  </h3>
+                  </h2>
                   <p className="mt-3 leading-7 text-zinc-400">{step.description}</p>
-                </div>
+                </article>
               ))}
             </div>
           </div>
@@ -69,7 +84,7 @@ export default function SellPage() {
       <CTASection
         eyebrow="Pronto para começar?"
         title="Receba uma avaliação inicial sem compromisso"
-        description="A base está pronta para adicionar upload de fotos, scoring e estado do processo por etapa."
+        description="Envie os dados da sua viatura e fale com a equipa da Up Motors em Coimbra para perceber o melhor enquadramento de venda."
         primaryAction={{ href: "/contact", label: "Falar com a equipa" }}
       />
     </>

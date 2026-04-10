@@ -3,6 +3,7 @@
 import { Car } from "@/types/car";
 import { CarStatus } from "@/types/database";
 import { Select } from "@/components/ui/select";
+import { getCarCategoryLabel, getCarStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 type Category = "Todos" | "Performance" | "Classicos" | "SUV" | "Executive";
@@ -35,10 +36,10 @@ const transmissions: Transmission[] = ["Todos", "Manual", "Automático"];
 const statuses: StatusValue[] = ["Todos", "available", "reserved", "sold", "draft"];
 const statusLabels: Record<StatusValue, string> = {
   Todos: "Todos os estados",
-  available: "Disponível",
-  reserved: "Reservado",
-  sold: "Vendido",
-  draft: "Rascunho",
+  available: getCarStatusLabel("available"),
+  reserved: getCarStatusLabel("reserved"),
+  sold: getCarStatusLabel("sold"),
+  draft: getCarStatusLabel("draft"),
 };
 
 export function FiltersSidebar({
@@ -63,13 +64,14 @@ export function FiltersSidebar({
   const brands = Array.from(new Set(cars.map((car) => car.brand))).sort();
   const fuels = Array.from(new Set(cars.map((car) => car.fuel))).sort();
   const highestPrice = cars.length > 0 ? Math.max(...cars.map((car) => car.price)) : 0;
-  const lowestYear = cars.length > 0 ? Math.min(...cars.map((car) => car.year)) : new Date().getFullYear();
+  const lowestYear =
+    cars.length > 0 ? Math.min(...cars.map((car) => car.year)) : new Date().getFullYear();
 
   return (
     <aside className="w-full max-w-xs space-y-10 lg:sticky lg:top-28">
       <div className="space-y-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-zinc-500">
-          Filtrar coleção
+          Filtrar colecao
         </p>
         <div className="space-y-3">
           {categories.map((item) => (
@@ -82,7 +84,7 @@ export function FiltersSidebar({
                 category === item ? "text-white" : "text-zinc-500 hover:text-white"
               )}
             >
-              {item === "Classicos" ? "Clássicos & Heritage" : item}
+              {item === "Todos" ? "Todos" : getCarCategoryLabel(item)}
             </button>
           ))}
         </div>
@@ -117,10 +119,10 @@ export function FiltersSidebar({
 
       <div className="space-y-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-zinc-500">
-          Combustível
+          Combustivel
         </p>
         <Select value={fuel} onChange={(event) => onFuelChange(event.target.value)}>
-          <option value="Todos">Todos os combustíveis</option>
+          <option value="Todos">Todos os combustiveis</option>
           {fuels.map((item) => (
             <option key={item} value={item}>
               {item}
@@ -131,7 +133,7 @@ export function FiltersSidebar({
 
       <div className="space-y-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-zinc-500">
-          Transmissão
+          Transmissao
         </p>
         <div className="flex flex-wrap gap-2">
           {transmissions.map((item) => (
@@ -154,11 +156,11 @@ export function FiltersSidebar({
 
       <div className="space-y-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-zinc-500">
-          Ordenação
+          Ordenacao
         </p>
         <Select value={sort} onChange={(event) => onSortChange(event.target.value as SortValue)}>
-          <option value="price-asc">Preço ascendente</option>
-          <option value="price-desc">Preço descendente</option>
+          <option value="price-asc">Preco ascendente</option>
+          <option value="price-desc">Preco descendente</option>
           <option value="newest">Mais recentes</option>
         </Select>
       </div>
@@ -166,7 +168,7 @@ export function FiltersSidebar({
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-zinc-500">
-            Preço máximo
+            Preco maximo
           </p>
           <span className="text-[11px] uppercase tracking-[0.2em] text-zinc-400">
             {new Intl.NumberFormat("pt-PT", {
@@ -190,7 +192,7 @@ export function FiltersSidebar({
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-zinc-500">
-            Ano mínimo
+            Ano minimo
           </p>
           <span className="text-[11px] uppercase tracking-[0.2em] text-zinc-400">{minYear}</span>
         </div>

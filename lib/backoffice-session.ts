@@ -17,7 +17,9 @@ export async function getBackofficeUser() {
 }
 
 export async function isAuthorizedBackofficeUser(email?: string | null) {
-  if (!email) {
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (!normalizedEmail) {
     return false;
   }
 
@@ -30,7 +32,7 @@ export async function isAuthorizedBackofficeUser(email?: string | null) {
   const { data, error } = await supabase
     .from("admin_users")
     .select("email")
-    .eq("email", email.toLowerCase())
+    .ilike("email", normalizedEmail)
     .maybeSingle();
 
   if (error) {

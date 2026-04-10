@@ -31,7 +31,21 @@ export async function getAdminCarById(id: string) {
     return null;
   }
 
-  const { data, error } = await supabase.from("cars").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("cars")
+    .select(
+      `*,
+      car_images (
+        id,
+        url,
+        storage_path,
+        alt_text,
+        position,
+        is_feature
+      )`
+    )
+    .eq("id", id)
+    .maybeSingle();
 
   if (error) {
     console.error("Erro ao carregar carro no backoffice:", error);

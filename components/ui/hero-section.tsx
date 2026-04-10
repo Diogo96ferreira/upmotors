@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -31,7 +32,14 @@ export function HeroSection({
         compact ? "min-h-[65svh] pt-24" : "min-h-[92svh] pt-24"
       )}
     >
-      <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover" />
+      <Image
+        src={image}
+        alt={title}
+        fill
+        priority={!compact}
+        sizes="100vw"
+        className="absolute inset-0 object-cover"
+      />
       <div className="absolute inset-0 bg-black/45" />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 

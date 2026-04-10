@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { CarImageManager } from "@/components/backoffice/car-image-manager";
 import { BackofficeShell } from "@/components/backoffice/backoffice-shell";
 import { CarForm } from "@/components/backoffice/car-form";
 import { getAdminCarById } from "@/lib/backoffice-data";
@@ -23,7 +24,15 @@ export default async function EditCarPage({ params }: Props) {
       title={`${car.brand} ${car.model}`}
       description="Edita os dados da viatura que alimentam catalogo, detalhe e destaques."
     >
-      <CarForm car={car} />
+      <div className="space-y-10">
+        <CarForm car={car} />
+        <CarImageManager
+          carId={car.id}
+          carSlug={car.slug}
+          carLabel={`${car.brand} ${car.model}`}
+          images={car.car_images ?? []}
+        />
+      </div>
     </BackofficeShell>
   );
 }

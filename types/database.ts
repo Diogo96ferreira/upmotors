@@ -5,6 +5,7 @@ export type LeadStatus = "new" | "contacted" | "closed";
 export type CarImageRow = {
   id: string;
   url: string;
+  storage_path?: string | null;
   is_feature: boolean | null;
   position: number | null;
   alt_text: string | null;
