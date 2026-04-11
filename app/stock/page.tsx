@@ -26,7 +26,7 @@ export default async function StockPage() {
       <HeroSection
         eyebrow="Carros usados Coimbra"
         title="Carros usados em Coimbra prontos a descobrir"
-        description="Explore carros a venda em Coimbra com filtros por marca, transmissao, combustivel e preco. Na Up Motors encontra carros usados baratos em Coimbra, carros importados, carros automaticos e oportunidades com preco reduzido."
+        description="Explore carros a venda em Coimbra com filtros por marca, transmissao, combustivel e preco. Na Up Motors encontra carros usados baratos em Coimbra, carros automaticos e viaturas selecionadas com acompanhamento proximo."
         image="https://images.unsplash.com/photo-1502161254066-6c74afbf07aa?auto=format&fit=crop&w=1600&q=80"
         compact
       />
@@ -44,9 +44,9 @@ export default async function StockPage() {
           <p className="max-w-3xl text-lg leading-8 text-zinc-400">
             Este catalogo reune carros usados em Coimbra, carros seminovos em Coimbra e viaturas
             com perfil premium, sempre com paginas de detalhe, informacao tecnica e contacto direto
-            com a equipa. Se procura comprar BMW usado em Coimbra, carros automaticos em Coimbra,
-            carros importados ou carros ate 15000EUR em Coimbra, o objetivo e ajudar a filtrar
-            rapidamente o que faz sentido para si.
+            com a equipa. Se procura carros automaticos em Coimbra, carros ate 15000EUR em Coimbra
+            ou uma configuracao especifica, o objetivo e ajudar a filtrar rapidamente o que faz
+            sentido para si.
           </p>
         </div>
 
@@ -65,7 +65,7 @@ export default async function StockPage() {
       <CTASection
         eyebrow="Nao encontrou a configuracao certa?"
         title="Peca ajuda para encontrar o carro ideal em Coimbra"
-        description="Se o carro certo ainda nao esta publicado, fale connosco. Podemos orientar a pesquisa, sugerir alternativas, procurar carros importados e identificar oportunidades com preco reduzido."
+        description="Se o carro certo ainda nao esta publicado, fale connosco. Podemos orientar a pesquisa e, quando fizer sentido, acompanhar um pedido de importacao automovel por encomenda."
         primaryAction={{ href: "/contact", label: "Pedir contacto" }}
       />
     </>

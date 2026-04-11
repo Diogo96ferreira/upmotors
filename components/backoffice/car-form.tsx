@@ -1,14 +1,19 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { saveCar, type CarFormState } from "@/app/backoffice/actions/admin";
+import {
+  generateCarCopy,
+  saveCar,
+  type CarFormState,
+} from "@/app/backoffice/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast-provider";
 import { CarImageRow, CarRow } from "@/types/database";
+import { Sparkles } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 const categories = ["Performance", "Classicos", "SUV", "Executive"] as const;
@@ -21,15 +26,27 @@ function sortImages(images: CarImageRow[] = []) {
 
 export function CarForm({ car }: { car?: CarRow | null }) {
   const [state, formAction] = useActionState(saveCar, initialCarFormState);
+  const [isGenerating, startGenerating] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
   const [featuredFileName, setFeaturedFileName] = useState("");
   const [galleryFileNames, setGalleryFileNames] = useState<string[]>([]);
   const handledStateRef = useRef<string>("");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const [shortDescription, setShortDescription] = useState(car?.shortDescription ?? "");
+  const [description, setDescription] = useState(car?.description ?? "");
+  const [highlight, setHighlight] = useState(car?.highlight ?? "");
 
   const sortedImages = useMemo(() => sortImages(car?.car_images ?? []), [car?.car_images]);
   const featuredImage = sortedImages.find((image) => image.is_feature) ?? sortedImages[0] ?? null;
   const galleryImages = sortedImages.filter((image) => image.id !== featuredImage?.id);
+
+  useEffect(() => {
+    setShortDescription(car?.shortDescription ?? "");
+    setDescription(car?.description ?? "");
+    setHighlight(car?.highlight ?? "");
+  }, [car?.description, car?.highlight, car?.shortDescription]);
 
   useEffect(() => {
     const stateKey = `${state.success ?? ""}|${state.error}|${state.redirectTo ?? ""}`;
@@ -64,8 +81,38 @@ export function CarForm({ car }: { car?: CarRow | null }) {
     }
   }, [router, state.error, state.redirectTo, state.success, toast]);
 
+  function handleGenerateCopy() {
+    if (!formRef.current) {
+      return;
+    }
+
+    startGenerating(async () => {
+      const formData = new FormData(formRef.current ?? undefined);
+      const result = await generateCarCopy(formData);
+
+      if (result.error) {
+        toast({
+          title: "Nao foi possivel gerar texto",
+          description: result.error,
+          variant: "error",
+        });
+        return;
+      }
+
+      setShortDescription(result.shortDescription ?? "");
+      setDescription(result.description ?? "");
+      setHighlight(result.highlight ?? "");
+
+      toast({
+        title: "Texto gerado com IA",
+        description: result.success ?? "Os campos de descricao foram preenchidos.",
+        variant: "success",
+      });
+    });
+  }
+
   return (
-    <form action={formAction} className="space-y-10">
+    <form ref={formRef} action={formAction} className="space-y-10">
       <input type="hidden" name="id" defaultValue={car?.id ?? ""} />
 
       <section className="grid gap-8 border border-white/10 bg-zinc-950 p-8 lg:grid-cols-2">
@@ -129,19 +176,52 @@ export function CarForm({ car }: { car?: CarRow | null }) {
             ))}
           </Select>
         </label>
+        <div className="space-y-3 lg:col-span-2">
+          <div className="flex flex-col gap-4 border border-white/10 bg-black/20 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Assistente IA</p>
+              <p className="text-sm leading-6 text-zinc-400">
+                Gera descricao curta, descricao principal e highlight com o Ollama local em PT-PT.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGenerateCopy}
+              disabled={isGenerating}
+              className="shrink-0"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              {isGenerating ? "A gerar..." : "Gerar descricao com IA"}
+            </Button>
+          </div>
+        </div>
         <label className="space-y-2 lg:col-span-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
             Descricao curta
           </span>
-          <Textarea name="shortDescription" defaultValue={car?.shortDescription ?? ""} />
+          <Textarea
+            name="shortDescription"
+            value={shortDescription}
+            onChange={(event) => setShortDescription(event.target.value)}
+          />
         </label>
         <label className="space-y-2 lg:col-span-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Descricao</span>
-          <Textarea name="description" defaultValue={car?.description ?? ""} required />
+          <Textarea
+            name="description"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            required
+          />
         </label>
         <label className="space-y-2 lg:col-span-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Highlight</span>
-          <Textarea name="highlight" defaultValue={car?.highlight ?? ""} />
+          <Textarea
+            name="highlight"
+            value={highlight}
+            onChange={(event) => setHighlight(event.target.value)}
+          />
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
@@ -171,9 +251,7 @@ export function CarForm({ car }: { car?: CarRow | null }) {
               type="file"
               accept="image/*"
               required={!car}
-              onChange={(event) =>
-                setFeaturedFileName(event.target.files?.[0]?.name ?? "")
-              }
+              onChange={(event) => setFeaturedFileName(event.target.files?.[0]?.name ?? "")}
             />
             <p className="text-sm leading-6 text-zinc-400">
               Faz upload de uma unica imagem principal. Ao editar, um novo upload substitui a

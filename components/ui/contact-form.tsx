@@ -18,7 +18,7 @@ type ContactFormProps = {
   title: string;
   subtitle: string;
   cta: string;
-  fields?: "contact" | "sell";
+  fields?: "contact" | "sell" | "import";
 };
 
 export function ContactForm({
@@ -97,10 +97,10 @@ export function ContactForm({
             <Input name="phone" placeholder="+351 9XX XXX XXX" inputMode="tel" />
           </label>
 
-          {fields === "sell" ? (
+          {fields === "sell" || fields === "import" ? (
             <label className="space-y-2">
               <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Marca</span>
-              <Input name="brand" placeholder="Ex: Porsche" required />
+              <Input name="brand" placeholder="Ex: Mercedes-Benz" required />
             </label>
           ) : (
             <div className="rounded-sm border border-white/10 bg-black/20 px-4 py-3 text-sm leading-6 text-zinc-400">
@@ -137,6 +137,27 @@ export function ContactForm({
           </>
         ) : null}
 
+        {fields === "import" ? (
+          <>
+            <div className="grid gap-8 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Modelo</span>
+                <Input name="model" placeholder="Ex: E 220 d Estate" required />
+              </label>
+              <label className="space-y-2">
+                <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+                  Ano pretendido
+                </span>
+                <Input name="year" placeholder="Ex: 2021" inputMode="numeric" />
+              </label>
+            </div>
+            <div className="rounded-sm border border-white/10 bg-black/20 px-4 py-3 text-sm leading-6 text-zinc-400">
+              Explica na mensagem a motorizacao, orcamento, quilometragem maxima, caixa, cor ou
+              qualquer configuracao importante para o pedido de importacao.
+            </div>
+          </>
+        ) : null}
+
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Mensagem</span>
           <Textarea
@@ -145,7 +166,9 @@ export function ContactForm({
             placeholder={
               fields === "sell"
                 ? "Estado da viatura, manutencao, extras relevantes, urgencia da venda..."
-                : "Diga-nos o modelo, viatura ou servico que pretende e como prefere ser contactado."
+                : fields === "import"
+                  ? "Indica a viatura pretendida, versao, motorizacao, orcamento, prazo ideal e detalhes importantes para a importacao."
+                  : "Diga-nos o modelo, viatura ou servico que pretende e como prefere ser contactado."
             }
             required
           />

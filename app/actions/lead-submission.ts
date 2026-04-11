@@ -59,7 +59,7 @@ export async function submitLeadSubmission(
     };
   }
 
-  if (formType !== "contact" && formType !== "sell") {
+  if (formType !== "contact" && formType !== "sell" && formType !== "import") {
     return {
       status: "error",
       message: "Tipo de pedido invalido.",
@@ -101,6 +101,13 @@ export async function submitLeadSubmission(
     };
   }
 
+  if (formType === "import" && (!brand || !model)) {
+    return {
+      status: "error",
+      message: "Indica pelo menos a marca e o modelo pretendidos para o pedido de importacao.",
+    };
+  }
+
   const { error } = await supabase.from("lead_submissions").insert({
     form_type: formType,
     name,
@@ -127,6 +134,8 @@ export async function submitLeadSubmission(
     message:
       formType === "sell"
         ? "Pedido de avaliacao registado com sucesso. A equipa vai analisar os dados e entrar em contacto."
+        : formType === "import"
+          ? "Pedido de importacao registado com sucesso. A equipa vai analisar a configuracao pretendida e entrar em contacto."
         : "Pedido enviado com sucesso. Vamos responder-te com a maior brevidade.",
   };
 }

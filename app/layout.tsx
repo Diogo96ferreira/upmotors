@@ -3,6 +3,7 @@ import { Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
+import { PageTransition } from "@/components/layout/page-transition";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { company } from "@/lib/site";
 import { getHomepageMetaDescription } from "@/lib/seo";
@@ -55,11 +56,13 @@ export default function RootLayout({
     <html lang="pt-PT">
       <body className={`${manrope.variable} ${spaceGrotesk.variable} font-sans`}>
         <ToastProvider>
-          <div className="relative min-h-screen">
-            <Navbar />
-            <main>{children}</main>
-            <Footer />
-          </div>
+          <PageTransition>
+            <div className="relative min-h-screen">
+              <Navbar />
+              <main>{children}</main>
+              <Footer />
+            </div>
+          </PageTransition>
         </ToastProvider>
       </body>
     </html>

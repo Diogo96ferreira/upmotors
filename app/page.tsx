@@ -32,9 +32,9 @@ const pillars = [
 ];
 
 const reasons = [
-  "Stand automovel com selecao orientada para carros usados, seminovos, carros importados e viaturas premium.",
+  "Stand automovel com selecao orientada para carros usados, seminovos e viaturas premium.",
   "Apoio especializado para quem procura comprar carro em Coimbra com menor risco e maior clareza.",
-  "Atendimento local, proximo e preparado para explicar cada carro com linguagem simples, rigor tecnico e foco no valor real.",
+  "Servico de importacao por encomenda para clientes que procuram uma viatura especifica no estrangeiro.",
 ];
 
 const advice = [
@@ -51,7 +51,7 @@ const advice = [
   {
     title: "Peca apoio especializado",
     description:
-      "Num stand de confianca em Coimbra, o objetivo nao e pressionar. E ajudar a escolher a viatura certa para o seu contexto real, incluindo carros importados bem documentados.",
+      "Num stand de confianca em Coimbra, o objetivo nao e pressionar. E ajudar a escolher a viatura certa para o seu contexto real ou a procurar no estrangeiro por encomenda.",
   },
 ];
 
@@ -74,8 +74,13 @@ export default async function HomePage() {
       <HeroSection
         eyebrow="Stand automovel em Coimbra"
         title="Stand Automovel em Coimbra"
-        description="Na Up Motors encontra carros usados em Coimbra, viaturas seminovas, carros importados e oportunidades a preco reduzido, com selecao cuidada, acompanhamento transparente e apoio real para comprar carro em Coimbra com confianca."
+        description="Na Up Motors encontra carros usados em Coimbra, viaturas seminovas e propostas premium com selecao cuidada, acompanhamento transparente e apoio real para comprar carro em Coimbra com confianca."
         image="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1600&q=80"
+        highlights={[
+          "Carros usados Coimbra",
+          "Stand de confianca",
+          "Apoio tecnico real",
+        ]}
         primaryAction={{ href: "/stock", label: "Ver carros a venda Coimbra" }}
         secondaryAction={{ href: "/contact", label: "Falar com a equipa" }}
         align="bottom"
@@ -93,9 +98,10 @@ export default async function HomePage() {
           </div>
           <p className="max-w-xl text-lg leading-8 text-zinc-400">
             Trabalhamos para quem procura um stand automovel em Coimbra com atendimento proximo,
-            selecao seria e informacao clara. Se quer comprar BMW usado em Coimbra, procurar carros
-            automaticos em Coimbra, avaliar carros importados ou encontrar uma oportunidade com
-            preco reduzido, a Up Motors ajuda a filtrar melhor a escolha.
+            selecao seria e informacao clara. Se procura carros automaticos em Coimbra, uma
+            oportunidade com preco reduzido ou simplesmente uma viatura certa para o seu perfil, a
+            Up Motors ajuda a filtrar melhor a escolha e acompanha tambem pedidos de importacao por
+            encomenda.
           </p>
         </div>
 
@@ -109,6 +115,104 @@ export default async function HomePage() {
               <p className="mt-4 leading-8 text-zinc-400">{pillar.description}</p>
             </article>
           ))}
+        </div>
+      </SectionWrapper>
+
+      <SectionWrapper className="border-y border-white/5 bg-black/20">
+        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="relative overflow-hidden border border-white/8 bg-zinc-950/80 p-8 md:p-10">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+            <p className="text-[11px] uppercase tracking-[0.34em] text-zinc-500">
+              Importacao automovel por encomenda
+            </p>
+            <h2 className="mt-4 font-[family-name:var(--font-heading)] text-4xl font-bold uppercase tracking-tight">
+              Procuramos no estrangeiro a viatura certa para si
+            </h2>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
+              Se o carro que procura nao estiver no nosso stock, pode pedir uma pesquisa
+              personalizada. A Up Motors acompanha a selecao, validacao e importacao automovel por
+              encomenda para clientes que sabem exatamente o que querem encontrar.
+            </p>
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <div className="border border-white/8 bg-black/30 px-4 py-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">Pedido</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-200">Marca, modelo, versao e orcamento definidos.</p>
+              </div>
+              <div className="border border-white/8 bg-black/30 px-4 py-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">Pesquisa</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-200">Filtragem de opcoes com foco em contexto e documentacao.</p>
+              </div>
+              <div className="border border-white/8 bg-black/30 px-4 py-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">Acompanhamento</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-200">Processo claro, proximo e adaptado ao teu pedido.</p>
+              </div>
+            </div>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center border border-white/12 bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.24em] text-black transition hover:bg-zinc-200"
+              >
+                Pedir importacao por encomenda
+              </Link>
+              <Link
+                href="/stock"
+                className="inline-flex items-center justify-center border border-white/12 px-6 py-3 text-sm font-semibold uppercase tracking-[0.24em] text-white transition hover:bg-white/5"
+              >
+                Ver stock disponivel
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+            {[
+              {
+                step: "01",
+                title: "Briefing do pedido",
+                copy: "Diz-nos a marca, modelo, motorizacao, orcamento e configuracao pretendida.",
+              },
+              {
+                step: "02",
+                title: "Curadoria internacional",
+                copy: "Filtramos opcoes no estrangeiro com foco em contexto, documentacao e coerencia da oportunidade.",
+              },
+              {
+                step: "03",
+                title: "Entrega acompanhada",
+                copy: "Acompanhamos o processo para que a compra seja mais clara, segura e adaptada ao teu pedido.",
+              },
+            ].map((item) => (
+              <article
+                key={item.step}
+                className="relative overflow-hidden border border-white/8 bg-zinc-950 p-6"
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/0 via-white/18 to-white/0" />
+                <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">{item.step}</p>
+                <h3 className="mt-4 font-[family-name:var(--font-heading)] text-2xl font-bold uppercase tracking-tight">
+                  {item.title}
+                </h3>
+                <p className="mt-4 leading-7 text-zinc-300">{item.copy}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </SectionWrapper>
+
+      <SectionWrapper>
+        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="space-y-5">
+            <p className="text-[11px] uppercase tracking-[0.34em] text-zinc-500">
+              Porque escolher a Up Motors?
+            </p>
+            <h2 className="font-[family-name:var(--font-heading)] text-4xl font-bold uppercase tracking-tight">
+              Um stand automovel com garantia de proximidade em Coimbra
+            </h2>
+          </div>
+          <div className="grid gap-4">
+            {reasons.map((reason) => (
+              <div key={reason} className="border border-white/8 bg-zinc-950 px-6 py-5 text-zinc-300">
+                {reason}
+              </div>
+            ))}
+          </div>
         </div>
       </SectionWrapper>
 
@@ -140,26 +244,6 @@ export default async function HomePage() {
             },
           }}
         />
-      </SectionWrapper>
-
-      <SectionWrapper>
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="space-y-5">
-            <p className="text-[11px] uppercase tracking-[0.34em] text-zinc-500">
-              Porque escolher a Up Motors?
-            </p>
-            <h2 className="font-[family-name:var(--font-heading)] text-4xl font-bold uppercase tracking-tight">
-              Um stand automovel com garantia de proximidade em Coimbra
-            </h2>
-          </div>
-          <div className="grid gap-4">
-            {reasons.map((reason) => (
-              <div key={reason} className="border border-white/8 bg-zinc-950 px-6 py-5 text-zinc-300">
-                {reason}
-              </div>
-            ))}
-          </div>
-        </div>
       </SectionWrapper>
 
       <SectionWrapper className="border-y border-white/5 bg-zinc-950/40">
@@ -200,9 +284,9 @@ export default async function HomePage() {
               Solucoes pensadas para cada perfil de compra
             </h2>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
-              Se procura carros ate 15000EUR em Coimbra, carros usados baratos em Coimbra, carros
-              importados ou uma viatura premium com apoio financeiro ajustado, podemos orientar o
-              processo e ajudar a perceber o enquadramento mais adequado para a sua compra.
+              Se procura carros ate 15000EUR em Coimbra, carros usados baratos em Coimbra ou uma
+              viatura premium com apoio financeiro ajustado, podemos orientar o processo e ajudar a
+              perceber o enquadramento mais adequado para a sua compra.
             </p>
           </div>
 
@@ -238,7 +322,7 @@ export default async function HomePage() {
       <CTASection
         eyebrow="Pronto para comprar carro em Coimbra?"
         title="Fale com um especialista da Up Motors"
-        description="Se procura um stand automovel com garantia em Coimbra, carros importados bem selecionados ou oportunidades a preco reduzido, contacte-nos para marcar visita e pedir detalhes tecnicos."
+        description="Se procura um stand automovel com garantia em Coimbra, contacte-nos para marcar visita, pedir detalhes tecnicos ou iniciar um pedido de importacao por encomenda."
         primaryAction={{ href: "/stock", label: "Explorar o stock" }}
         secondaryAction={{ href: "/contact", label: "Pedir contacto" }}
       />

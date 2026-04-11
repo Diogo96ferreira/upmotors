@@ -17,6 +17,12 @@ export type ActionResult = {
   success?: string;
 };
 
+export type GenerateCarCopyResult = ActionResult & {
+  shortDescription?: string;
+  description?: string;
+  highlight?: string;
+};
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -83,6 +89,82 @@ function sanitizeFilename(filename: string) {
   const basename = filename.replace(/\.[^/.]+$/, "");
   const safeBasename = slugify(basename) || "imagem";
   return extension ? `${safeBasename}.${extension.toLowerCase()}` : safeBasename;
+}
+
+function getOllamaHost() {
+  return (process.env.OLLAMA_HOST || "http://127.0.0.1:11434").replace(/\/$/, "");
+}
+
+function getOllamaModel() {
+  return process.env.OLLAMA_MODEL || "gemma4:e4b";
+}
+
+function buildCarCopyPrompt(data: {
+  brand: string;
+  model: string;
+  version?: string;
+  year?: number | null;
+  price?: number | null;
+  mileage_km?: number | null;
+  fuel?: string;
+  transmission?: string;
+  power_hp?: number | null;
+  category?: string;
+  engine?: string;
+  drivetrain?: string;
+  exterior?: string;
+  interior?: string;
+}) {
+  return `
+És um copywriter automóvel premium da Up Motors, stand automóvel em Coimbra, Portugal.
+
+Objetivo:
+- escrever copy em PT-PT
+- tom premium, claro, elegante e credível
+- nada de exageros baratos ou linguagem brasileira
+- sem inventar factos não fornecidos
+
+Preciso de devolver JSON válido com este formato:
+{
+  "shortDescription": "1 frase curta",
+  "description": "1 parágrafo com 110 a 170 palavras",
+  "highlight": "1 parágrafo curto com 35 a 70 palavras"
+}
+
+Contexto da viatura:
+- Marca: ${data.brand}
+- Modelo: ${data.model}
+- Versão: ${data.version || "n/d"}
+- Ano: ${data.year ?? "n/d"}
+- Preço: ${data.price ?? "n/d"} EUR
+- Quilometragem: ${data.mileage_km ?? "n/d"} km
+- Combustível: ${data.fuel || "n/d"}
+- Transmissão: ${data.transmission || "n/d"}
+- Potência: ${data.power_hp ?? "n/d"} cv
+- Categoria: ${data.category || "n/d"}
+- Motor: ${data.engine || "n/d"}
+- Tração: ${data.drivetrain || "n/d"}
+- Cor exterior: ${data.exterior || "n/d"}
+- Interior: ${data.interior || "n/d"}
+
+Regras:
+- mencionar Coimbra apenas de forma subtil quando fizer sentido
+- não usar bullet points
+- não repetir sempre os mesmos adjetivos
+- não referir importação, garantia ou histórico se não tiver sido fornecido
+- devolver apenas JSON, sem markdown e sem texto extra
+  `.trim();
+}
+
+function extractJsonObject(value: string) {
+  const start = value.indexOf("{");
+  const end = value.lastIndexOf("}");
+
+  if (start === -1 || end === -1 || end <= start) {
+    return null;
+  }
+
+  return value.slice(start, end + 1);
 }
 
 async function persistCar(
@@ -329,6 +411,100 @@ export async function saveCar(
     success: carIdMessage(id),
     redirectTo: "/backoffice/cars",
   };
+}
+
+export async function generateCarCopy(formData: FormData): Promise<GenerateCarCopyResult> {
+  await requireBackofficeUser();
+
+  const brand = getText(formData, "brand");
+  const model = getText(formData, "model");
+
+  if (!brand || !model) {
+    return { error: "Preenche pelo menos a marca e o modelo antes de gerar a descricao." };
+  }
+
+  const prompt = buildCarCopyPrompt({
+    brand,
+    model,
+    version: getText(formData, "version") || undefined,
+    year: getNumber(formData, "year"),
+    price: getNumber(formData, "price"),
+    mileage_km: getNumber(formData, "mileage_km"),
+    fuel: getText(formData, "fuel") || undefined,
+    transmission: getText(formData, "transmission") || undefined,
+    power_hp: getNumber(formData, "power_hp"),
+    category: getText(formData, "category") || undefined,
+    engine: getText(formData, "spec_engine") || undefined,
+    drivetrain: getText(formData, "spec_drivetrain") || undefined,
+    exterior: getText(formData, "spec_exterior") || undefined,
+    interior: getText(formData, "spec_interior") || undefined,
+  });
+
+  try {
+    const response = await fetch(`${getOllamaHost()}/api/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: getOllamaModel(),
+        stream: false,
+        format: "json",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Erro Ollama:", response.status, errorText);
+      return {
+        error:
+          "Nao foi possivel gerar texto com o Ollama. Confirma se o servidor esta ativo e se o modelo configurado existe.",
+      };
+    }
+
+    const data = (await response.json()) as {
+      message?: { content?: string };
+      response?: string;
+    };
+
+    const rawContent = data.message?.content || data.response || "";
+    const jsonPayload = extractJsonObject(rawContent);
+
+    if (!jsonPayload) {
+      console.error("Resposta do Ollama sem JSON reconhecivel:", rawContent);
+      return { error: "O modelo respondeu num formato inesperado." };
+    }
+
+    const parsed = JSON.parse(jsonPayload) as {
+      shortDescription?: string;
+      description?: string;
+      highlight?: string;
+    };
+
+    if (!parsed.description) {
+      return { error: "O modelo nao devolveu uma descricao valida." };
+    }
+
+    return {
+      success: "Descricao gerada com IA.",
+      shortDescription: parsed.shortDescription?.trim() || "",
+      description: parsed.description.trim(),
+      highlight: parsed.highlight?.trim() || "",
+    };
+  } catch (error) {
+    console.error("Erro ao comunicar com o Ollama:", error);
+    return {
+      error:
+        "Nao foi possivel comunicar com o Ollama local. Confirma se o Ollama esta aberto e acessivel em http://127.0.0.1:11434.",
+    };
+  }
 }
 
 export async function updateLeadStatus(formData: FormData) {

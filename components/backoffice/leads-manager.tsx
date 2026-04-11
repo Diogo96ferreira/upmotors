@@ -17,10 +17,12 @@ import { getLeadStatusLabel } from "@/lib/labels";
 import { LeadSubmissionRow, LeadStatus } from "@/types/database";
 
 const leadStatuses = ["new", "contacted", "closed"] as const;
-const formTypes = ["all", "contact", "sell"] as const;
+const formTypes = ["all", "contact", "sell", "import"] as const;
 
 function getLeadFormTypeLabel(formType: LeadSubmissionRow["form_type"]) {
-  return formType === "sell" ? "Venda" : "Contacto";
+  if (formType === "sell") return "Venda";
+  if (formType === "import") return "Importacao";
+  return "Contacto";
 }
 
 function formatDate(value: string) {
@@ -126,7 +128,13 @@ export function LeadsManager({ leads }: { leads: LeadSubmissionRow[] }) {
           >
             {formTypes.map((item) => (
               <option key={item} value={item}>
-                {item === "all" ? "Todos" : item === "sell" ? "Venda" : "Contacto"}
+                {item === "all"
+                  ? "Todos"
+                  : item === "sell"
+                    ? "Venda"
+                    : item === "import"
+                      ? "Importacao"
+                      : "Contacto"}
               </option>
             ))}
           </Select>

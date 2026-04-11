@@ -155,8 +155,8 @@ export default async function CarDetailPage({ params }: DetailPageProps) {
                 <p className="mt-5 leading-8 text-zinc-400">
                   Na Up Motors, cada viatura e apresentada com informacao clara, leitura tecnica e
                   enquadramento comercial ajustado. Se procura um stand automovel com garantia em
-                  Coimbra, carros importados bem selecionados ou uma oportunidade com preco
-                  reduzido, esta abordagem ajuda a decidir com mais seguranca.
+                  Coimbra, esta abordagem ajuda a decidir com mais seguranca e com melhor leitura
+                  da oportunidade.
                 </p>
               </div>
             </div>
@@ -184,8 +184,8 @@ export default async function CarDetailPage({ params }: DetailPageProps) {
                 Fale com a equipa Up Motors
               </h2>
               <p className="mt-4 leading-7 text-zinc-400">
-                Receba detalhes sobre garantia, disponibilidade, financiamento, importacao e marque
-                uma visita ao nosso stand em Coimbra.
+                Receba detalhes sobre garantia, disponibilidade, financiamento e marque uma visita
+                ao nosso stand em Coimbra.
               </p>
               <div className="mt-8 space-y-3">
                 <Link href="/contact" className={cn(buttonVariants(), "flex w-full justify-center")}>

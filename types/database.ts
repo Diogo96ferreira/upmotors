@@ -46,7 +46,7 @@ export type CarRow = {
 
 export type LeadSubmissionRow = {
   id: string;
-  form_type: "contact" | "sell";
+  form_type: "contact" | "sell" | "import";
   name: string;
   email: string;
   phone: string | null;

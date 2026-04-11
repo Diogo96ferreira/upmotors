@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,8 +14,15 @@ type CarGalleryProps = {
 export function CarGallery({ images, altBase }: CarGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
   const featuredImage = images[0];
   const additionalImages = images.slice(1);
+  const currentImage = images[activeIndex];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!lightboxOpen) {
@@ -35,16 +43,119 @@ export function CarGallery({ images, altBase }: CarGalleryProps) {
       }
     }
 
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [images.length, lightboxOpen]);
 
-  const currentImage = images[activeIndex];
+  const lightbox = useMemo(() => {
+    if (!mounted || !lightboxOpen) {
+      return null;
+    }
+
+    return createPortal(
+      <AnimatePresence>
+        <motion.div
+          key={`lightbox-${currentImage}`}
+          className="fixed inset-0 z-[120] flex h-screen w-screen items-center justify-center bg-black/88 p-4 backdrop-blur-md md:p-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22, ease: "easeOut" }}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute inset-0 cursor-default"
+            aria-label="Fechar galeria"
+          />
+
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute right-4 top-4 z-20 inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white transition hover:bg-white/10 md:right-8 md:top-8"
+            aria-label="Fechar galeria"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {images.length > 1 ? (
+            <button
+              type="button"
+              onClick={() =>
+                setActiveIndex((current) => (current - 1 + images.length) % images.length)
+              }
+              className="absolute left-3 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white transition hover:bg-white/10 md:left-8"
+              aria-label="Imagem anterior"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+          ) : null}
+
+          <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-5">
+            <div className="flex min-h-[60svh] items-center justify-center">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentImage}
+                  src={currentImage}
+                  alt={`${altBase} ampliada ${activeIndex + 1}`}
+                  initial={{ opacity: 0, scale: 0.985, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 1.01, y: -10 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                  className="max-h-[78svh] w-full object-contain"
+                />
+              </AnimatePresence>
+            </div>
+
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm uppercase tracking-[0.24em] text-zinc-400">
+                {activeIndex + 1} / {images.length}
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {images.map((image, index) => (
+                  <button
+                    key={`${image}-thumb`}
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                    className={cn(
+                      "overflow-hidden border transition",
+                      index === activeIndex
+                        ? "border-white/50"
+                        : "border-white/10 hover:border-white/25"
+                    )}
+                  >
+                    <img
+                      src={image}
+                      alt={`${altBase} miniatura ${index + 1}`}
+                      className="h-16 w-24 object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {images.length > 1 ? (
+            <button
+              type="button"
+              onClick={() => setActiveIndex((current) => (current + 1) % images.length)}
+              className="absolute right-3 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white transition hover:bg-white/10 md:right-8"
+              aria-label="Imagem seguinte"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          ) : null}
+        </motion.div>
+      </AnimatePresence>,
+      document.body
+    );
+  }, [activeIndex, altBase, currentImage, images, lightboxOpen, mounted]);
 
   return (
     <>
@@ -102,77 +213,7 @@ export function CarGallery({ images, altBase }: CarGalleryProps) {
         ) : null}
       </div>
 
-      {lightboxOpen ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 md:p-8">
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(false)}
-            className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center border border-white/15 text-white transition hover:bg-white/10 md:right-8 md:top-8"
-            aria-label="Fechar galeria"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveIndex((current) => (current - 1 + images.length) % images.length)}
-            className="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center border border-white/15 text-white transition hover:bg-white/10 md:left-8"
-            aria-label="Imagem anterior"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-            <div className="relative min-h-[50svh]">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentImage}
-                  src={currentImage}
-                  alt={`${altBase} ampliada ${activeIndex + 1}`}
-                  initial={{ opacity: 0, scale: 0.985, y: 12 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 1.01, y: -10 }}
-                  transition={{ duration: 0.24, ease: "easeOut" }}
-                  className="max-h-[78svh] w-full object-contain"
-                />
-              </AnimatePresence>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm uppercase tracking-[0.24em] text-zinc-400">
-                {activeIndex + 1} / {images.length}
-              </p>
-              <div className="flex gap-2 overflow-x-auto">
-                {images.map((image, index) => (
-                  <button
-                    key={`${image}-thumb`}
-                    type="button"
-                    onClick={() => setActiveIndex(index)}
-                    className={cn(
-                      "overflow-hidden border transition",
-                      index === activeIndex ? "border-white/40" : "border-white/10"
-                    )}
-                  >
-                    <img
-                      src={image}
-                      alt={`${altBase} miniatura ${index + 1}`}
-                      className="h-16 w-24 object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setActiveIndex((current) => (current + 1) % images.length)}
-            className="absolute right-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center border border-white/15 text-white transition hover:bg-white/10 md:right-8"
-            aria-label="Imagem seguinte"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      ) : null}
+      {lightbox}
     </>
   );
 }
