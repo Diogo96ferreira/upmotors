@@ -39,6 +39,9 @@ export type CarRow = {
     exterior?: string;
     interior?: string;
     location?: string;
+    equipment?: string;
+    history?: string;
+    commercialNotes?: string;
   } | null;
   created_at: string;
   car_images?: CarImageRow[] | null;

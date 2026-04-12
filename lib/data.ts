@@ -61,6 +61,9 @@ function normalizeCar(row: CarRow): Car {
       exterior: row.specs?.exterior ?? "Por validar",
       interior: row.specs?.interior ?? "Por validar",
       location: row.specs?.location ?? "Coimbra",
+      equipment: row.specs?.equipment ?? "",
+      history: row.specs?.history ?? "",
+      commercialNotes: row.specs?.commercialNotes ?? "",
     },
   };
 }

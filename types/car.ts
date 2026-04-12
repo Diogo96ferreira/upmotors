@@ -28,5 +28,8 @@ export type Car = {
     exterior: string;
     interior: string;
     location: string;
+    equipment: string;
+    history: string;
+    commercialNotes: string;
   };
 };

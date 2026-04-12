@@ -23,6 +23,16 @@ export type GenerateCarCopyResult = ActionResult & {
   highlight?: string;
 };
 
+export type GenerateCarAutofillResult = GenerateCarCopyResult & {
+  fuel?: string;
+  transmission?: string;
+  power_hp?: number | null;
+  category?: CarCategory;
+  spec_engine?: string;
+  spec_drivetrain?: string;
+  spec_acceleration?: string;
+};
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -91,12 +101,12 @@ function sanitizeFilename(filename: string) {
   return extension ? `${safeBasename}.${extension.toLowerCase()}` : safeBasename;
 }
 
-function getOllamaHost() {
-  return (process.env.OLLAMA_HOST || "http://127.0.0.1:11434").replace(/\/$/, "");
+function getGeminiApiKey() {
+  return process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
 }
 
-function getOllamaModel() {
-  return process.env.OLLAMA_MODEL || "gemma4:e4b";
+function getGeminiModel() {
+  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
 }
 
 function buildCarCopyPrompt(data: {
@@ -114,6 +124,9 @@ function buildCarCopyPrompt(data: {
   drivetrain?: string;
   exterior?: string;
   interior?: string;
+  equipment?: string;
+  history?: string;
+  commercialNotes?: string;
 }) {
   return `
 És um copywriter automóvel premium da Up Motors, stand automóvel em Coimbra, Portugal.
@@ -156,6 +169,175 @@ Regras:
   `.trim();
 }
 
+function buildCarAutofillPrompt(data: {
+  brand: string;
+  model: string;
+  version?: string;
+  year?: number | null;
+}) {
+  return `
+És um especialista automóvel e copywriter premium da Up Motors, stand automóvel em Coimbra.
+
+O admin vai preencher marca, modelo e ano. A tua tarefa é sugerir specs técnicas prováveis e copy de venda.
+
+Importante:
+- Se uma especificação for incerta, deixa string vazia ou null.
+- Não inventes cor exterior, interior, preço ou quilometragem.
+- Usa PT-PT.
+- Mantém o tom premium, claro e comercial.
+- A copy deve ser orientada para venda, mas credível.
+
+Devolve apenas JSON válido neste formato:
+{
+  "fuel": "Gasolina | Diesel | Hibrido | Eletrico | Plug-in Hybrid | ...",
+  "transmission": "Manual | Automatico | ...",
+  "power_hp": 150,
+  "category": "Performance | Classicos | SUV | Executive",
+  "spec_engine": "ex: 2.0L Diesel",
+  "spec_drivetrain": "ex: Tracao dianteira",
+  "spec_acceleration": "ex: 7.8 s 0-100 km/h",
+  "shortDescription": "1 frase curta",
+  "description": "1 paragrafo com 110 a 170 palavras",
+  "highlight": "1 paragrafo curto com 35 a 70 palavras"
+}
+
+Dados fornecidos:
+- Marca: ${data.brand}
+- Modelo: ${data.model}
+- Versão: ${data.version || "n/d"}
+- Ano: ${data.year ?? "n/d"}
+  `.trim();
+}
+
+function buildEnhancedCarCopyPrompt(data: {
+  brand: string;
+  model: string;
+  version?: string;
+  year?: number | null;
+  price?: number | null;
+  mileage_km?: number | null;
+  fuel?: string;
+  transmission?: string;
+  power_hp?: number | null;
+  category?: string;
+  engine?: string;
+  drivetrain?: string;
+  exterior?: string;
+  interior?: string;
+  equipment?: string;
+  history?: string;
+  commercialNotes?: string;
+}) {
+  return `
+Es um copywriter automovel premium da Up Motors, stand automovel em Coimbra, Portugal.
+
+Objetivo:
+- escrever em PT-PT europeu
+- criar uma descricao entusiasmante para comprador final
+- usar os dados reais fornecidos para dar substancia, confianca e desejo
+- manter tom premium, claro, elegante e credibil
+- nunca inventar equipamento, historico, garantia, estado ou manutencao
+
+Devolve apenas JSON valido neste formato:
+{
+  "shortDescription": "1 frase curta, concreta e apelativa",
+  "description": "2 a 3 paragrafos com 170 a 260 palavras",
+  "highlight": "1 paragrafo curto com 45 a 80 palavras"
+}
+
+Dados da viatura:
+- Marca: ${data.brand}
+- Modelo: ${data.model}
+- Versao: ${data.version || "n/d"}
+- Ano: ${data.year ?? "n/d"}
+- Preco: ${data.price ?? "n/d"} EUR
+- Quilometragem: ${data.mileage_km ?? "n/d"} km
+- Combustivel: ${data.fuel || "n/d"}
+- Transmissao: ${data.transmission || "n/d"}
+- Potencia: ${data.power_hp ?? "n/d"} cv
+- Categoria: ${data.category || "n/d"}
+- Motor: ${data.engine || "n/d"}
+- Tracao: ${data.drivetrain || "n/d"}
+- Cor exterior: ${data.exterior || "n/d"}
+- Interior: ${data.interior || "n/d"}
+- Equipamento / extras: ${data.equipment || "n/d"}
+- Historico / manutencao: ${data.history || "n/d"}
+- Observacoes comerciais: ${data.commercialNotes || "n/d"}
+
+Regras de escrita:
+- a descricao principal nao pode ser uma linha, nem uma frase generica
+- escreve como quem esta a apresentar a viatura a um comprador interessado
+- integra specs, extras, estado, historico e detalhes comerciais quando forem fornecidos
+- se um campo estiver "n/d", ignora-o
+- menciona Coimbra apenas de forma subtil quando fizer sentido
+- nao uses bullet points, markdown, emojis ou claims absolutos
+- nao digas "garantia", "revisoes em dia", "nacional" ou "sem acidentes" se isso nao estiver nos dados
+  `.trim();
+}
+
+function buildEnhancedCarAutofillPrompt(data: {
+  brand: string;
+  model: string;
+  version?: string;
+  year?: number | null;
+  price?: number | null;
+  mileage_km?: number | null;
+  equipment?: string;
+  history?: string;
+  commercialNotes?: string;
+}) {
+  return `
+Es um especialista automovel e copywriter premium da Up Motors, stand automovel em Coimbra.
+
+O admin preenche marca, modelo e ano. A tua tarefa e sugerir specs tecnicas provaveis e uma copy de venda forte.
+
+Importante:
+- se uma especificacao for incerta, deixa string vazia ou null
+- nao inventes cor exterior, interior, preco, quilometragem, extras, manutencao ou historico
+- usa PT-PT europeu
+- a copy deve entusiasmar, mas continuar credibil
+
+Devolve apenas JSON valido neste formato:
+{
+  "fuel": "Gasolina | Diesel | Hibrido | Eletrico | Plug-in Hybrid | ...",
+  "transmission": "Manual | Automatico | ...",
+  "power_hp": 150,
+  "category": "Performance | Classicos | SUV | Executive",
+  "spec_engine": "ex: 2.0L Diesel",
+  "spec_drivetrain": "ex: Tracao dianteira",
+  "spec_acceleration": "ex: 7.8 s 0-100 km/h",
+  "shortDescription": "1 frase curta, concreta e apelativa",
+  "description": "2 a 3 paragrafos com 170 a 260 palavras",
+  "highlight": "1 paragrafo curto com 45 a 80 palavras"
+}
+
+Dados fornecidos:
+- Marca: ${data.brand}
+- Modelo: ${data.model}
+- Versao: ${data.version || "n/d"}
+- Ano: ${data.year ?? "n/d"}
+- Preco: ${data.price ?? "n/d"} EUR
+- Quilometragem: ${data.mileage_km ?? "n/d"} km
+- Equipamento / extras ja indicados: ${data.equipment || "n/d"}
+- Historico / manutencao ja indicado: ${data.history || "n/d"}
+- Observacoes comerciais ja indicadas: ${data.commercialNotes || "n/d"}
+
+Regras para a copy:
+- nunca devolvas uma descricao curta de uma linha
+- usa os extras e detalhes indicados para tornar a viatura especifica
+- nao inventes equipamento ou historico
+- evita texto frio de ficha tecnica; escreve para conversao
+  `.trim();
+}
+
+function normalizeGeneratedCategory(value?: string): CarCategory | undefined {
+  if (value === "Performance" || value === "Classicos" || value === "SUV" || value === "Executive") {
+    return value;
+  }
+
+  return undefined;
+}
+
 function extractJsonObject(value: string) {
   const start = value.indexOf("{");
   const end = value.lastIndexOf("}");
@@ -165,6 +347,162 @@ function extractJsonObject(value: string) {
   }
 
   return value.slice(start, end + 1);
+}
+
+const carCopyResponseSchema = {
+  type: "object",
+  properties: {
+    shortDescription: {
+      type: "string",
+      description: "Descricao curta de uma frase, concreta e orientada para venda.",
+    },
+    description: {
+      type: "string",
+      description: "Descricao principal em PT-PT com 170 a 260 palavras e 2 a 3 paragrafos.",
+    },
+    highlight: {
+      type: "string",
+      description: "Resumo editorial curto com 45 a 80 palavras.",
+    },
+  },
+  required: ["shortDescription", "description", "highlight"],
+  propertyOrdering: ["shortDescription", "description", "highlight"],
+};
+
+const carAutofillResponseSchema = {
+  type: "object",
+  properties: {
+    fuel: {
+      type: "string",
+      description: "Combustivel provavel. Ex: Gasolina, Diesel, Hibrido, Eletrico.",
+    },
+    transmission: {
+      type: "string",
+      description: "Transmissao provavel. Ex: Manual, Automatico.",
+    },
+    power_hp: {
+      type: "integer",
+      description: "Potencia aproximada em cavalos. Usar null se for incerto.",
+      nullable: true,
+    },
+    category: {
+      type: "string",
+      enum: ["Performance", "Classicos", "SUV", "Executive"],
+      description: "Categoria interna mais adequada.",
+    },
+    spec_engine: {
+      type: "string",
+      description: "Motor provavel. Ex: 2.0L Diesel.",
+    },
+    spec_drivetrain: {
+      type: "string",
+      description: "Tracao provavel. Ex: Tracao dianteira.",
+    },
+    spec_acceleration: {
+      type: "string",
+      description: "0-100 km/h aproximado. Usar string vazia se for incerto.",
+    },
+    shortDescription: {
+      type: "string",
+      description: "Descricao curta de uma frase, concreta e orientada para venda.",
+    },
+    description: {
+      type: "string",
+      description: "Descricao principal em PT-PT com 170 a 260 palavras e 2 a 3 paragrafos.",
+    },
+    highlight: {
+      type: "string",
+      description: "Resumo editorial curto com 45 a 80 palavras.",
+    },
+  },
+  required: [
+    "fuel",
+    "transmission",
+    "power_hp",
+    "category",
+    "spec_engine",
+    "spec_drivetrain",
+    "spec_acceleration",
+    "shortDescription",
+    "description",
+    "highlight",
+  ],
+  propertyOrdering: [
+    "fuel",
+    "transmission",
+    "power_hp",
+    "category",
+    "spec_engine",
+    "spec_drivetrain",
+    "spec_acceleration",
+    "shortDescription",
+    "description",
+    "highlight",
+  ],
+};
+
+async function generateGeminiJson<T>(prompt: string, responseSchema: Record<string, unknown>) {
+  const apiKey = getGeminiApiKey();
+
+  if (!apiKey) {
+    return {
+      error:
+        "Define GEMINI_API_KEY ou GOOGLE_GENERATIVE_AI_API_KEY no .env.local para usar o assistente IA.",
+      data: null,
+    };
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${getGeminiModel()}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.45,
+          responseMimeType: "application/json",
+          responseSchema,
+        },
+      }),
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Erro Gemini:", response.status, errorText);
+    return {
+      error:
+        "Nao foi possivel gerar texto com o Gemini. Confirma a API key, o modelo configurado e a quota da conta Google AI.",
+      data: null,
+    };
+  }
+
+  const payload = (await response.json()) as {
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: string }>;
+      };
+    }>;
+  };
+  const rawContent =
+    payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
+  const jsonPayload = extractJsonObject(rawContent);
+
+  if (!jsonPayload) {
+    console.error("Resposta do Gemini sem JSON reconhecivel:", rawContent);
+    return { error: "O modelo respondeu num formato inesperado.", data: null };
+  }
+
+  return { error: "", data: JSON.parse(jsonPayload) as T };
 }
 
 async function persistCar(
@@ -350,6 +688,13 @@ export async function saveCar(
     return { error: "A imagem principal e obrigatoria ao criar uma viatura." };
   }
 
+  if (description.length < 180) {
+    return {
+      error:
+        "A descricao da viatura esta demasiado curta. Escreve pelo menos 2 paragrafos com detalhes, extras e contexto comercial.",
+    };
+  }
+
   const slugBase = getText(formData, "slug") || `${brand}-${model}-${year}`;
   const payload: Record<string, unknown> = {
     slug: slugify(slugBase),
@@ -376,6 +721,9 @@ export async function saveCar(
       exterior: getNullableText(formData, "spec_exterior"),
       interior: getNullableText(formData, "spec_interior"),
       location: getNullableText(formData, "spec_location"),
+      equipment: getNullableText(formData, "spec_equipment"),
+      history: getNullableText(formData, "spec_history"),
+      commercialNotes: getNullableText(formData, "spec_commercial_notes"),
     },
   };
 
@@ -423,7 +771,7 @@ export async function generateCarCopy(formData: FormData): Promise<GenerateCarCo
     return { error: "Preenche pelo menos a marca e o modelo antes de gerar a descricao." };
   }
 
-  const prompt = buildCarCopyPrompt({
+  const prompt = buildEnhancedCarCopyPrompt({
     brand,
     model,
     version: getText(formData, "version") || undefined,
@@ -438,55 +786,23 @@ export async function generateCarCopy(formData: FormData): Promise<GenerateCarCo
     drivetrain: getText(formData, "spec_drivetrain") || undefined,
     exterior: getText(formData, "spec_exterior") || undefined,
     interior: getText(formData, "spec_interior") || undefined,
+    equipment: getText(formData, "spec_equipment") || undefined,
+    history: getText(formData, "spec_history") || undefined,
+    commercialNotes: getText(formData, "spec_commercial_notes") || undefined,
   });
 
   try {
-    const response = await fetch(`${getOllamaHost()}/api/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: getOllamaModel(),
-        stream: false,
-        format: "json",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      }),
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Erro Ollama:", response.status, errorText);
-      return {
-        error:
-          "Nao foi possivel gerar texto com o Ollama. Confirma se o servidor esta ativo e se o modelo configurado existe.",
-      };
-    }
-
-    const data = (await response.json()) as {
-      message?: { content?: string };
-      response?: string;
-    };
-
-    const rawContent = data.message?.content || data.response || "";
-    const jsonPayload = extractJsonObject(rawContent);
-
-    if (!jsonPayload) {
-      console.error("Resposta do Ollama sem JSON reconhecivel:", rawContent);
-      return { error: "O modelo respondeu num formato inesperado." };
-    }
-
-    const parsed = JSON.parse(jsonPayload) as {
+    const result = await generateGeminiJson<{
       shortDescription?: string;
       description?: string;
       highlight?: string;
-    };
+    }>(prompt, carCopyResponseSchema);
+
+    if (result.error || !result.data) {
+      return { error: result.error };
+    }
+
+    const parsed = result.data;
 
     if (!parsed.description) {
       return { error: "O modelo nao devolveu uma descricao valida." };
@@ -499,10 +815,84 @@ export async function generateCarCopy(formData: FormData): Promise<GenerateCarCo
       highlight: parsed.highlight?.trim() || "",
     };
   } catch (error) {
-    console.error("Erro ao comunicar com o Ollama:", error);
+    console.error("Erro ao comunicar com o Gemini:", error);
     return {
-      error:
-        "Nao foi possivel comunicar com o Ollama local. Confirma se o Ollama esta aberto e acessivel em http://127.0.0.1:11434.",
+      error: "Nao foi possivel comunicar com o Gemini. Confirma a API key e tenta novamente.",
+    };
+  }
+}
+
+export async function generateCarAutofill(
+  formData: FormData
+): Promise<GenerateCarAutofillResult> {
+  await requireBackofficeUser();
+
+  const brand = getText(formData, "brand");
+  const model = getText(formData, "model");
+  const year = getNumber(formData, "year");
+
+  if (!brand || !model || !year) {
+    return {
+      error: "Preenche marca, modelo e ano antes de usar o auto preenchimento com IA.",
+    };
+  }
+
+  const prompt = buildEnhancedCarAutofillPrompt({
+    brand,
+    model,
+    year,
+    version: getText(formData, "version") || undefined,
+    price: getNumber(formData, "price"),
+    mileage_km: getNumber(formData, "mileage_km"),
+    equipment: getText(formData, "spec_equipment") || undefined,
+    history: getText(formData, "spec_history") || undefined,
+    commercialNotes: getText(formData, "spec_commercial_notes") || undefined,
+  });
+
+  try {
+    const result = await generateGeminiJson<{
+      fuel?: string;
+      transmission?: string;
+      power_hp?: number | string | null;
+      category?: string;
+      spec_engine?: string;
+      spec_drivetrain?: string;
+      spec_acceleration?: string;
+      shortDescription?: string;
+      description?: string;
+      highlight?: string;
+    }>(prompt, carAutofillResponseSchema);
+
+    if (result.error || !result.data) {
+      return { error: result.error };
+    }
+
+    const parsed = result.data;
+
+    const parsedPower =
+      typeof parsed.power_hp === "number"
+        ? parsed.power_hp
+        : typeof parsed.power_hp === "string"
+          ? Number(parsed.power_hp.replace(/[^\d]/g, ""))
+          : null;
+
+    return {
+      success: "Campos preenchidos com sugestoes da IA. Confirma as specs antes de guardar.",
+      fuel: parsed.fuel?.trim() || "",
+      transmission: parsed.transmission?.trim() || "",
+      power_hp: Number.isFinite(parsedPower) ? parsedPower : null,
+      category: normalizeGeneratedCategory(parsed.category),
+      spec_engine: parsed.spec_engine?.trim() || "",
+      spec_drivetrain: parsed.spec_drivetrain?.trim() || "",
+      spec_acceleration: parsed.spec_acceleration?.trim() || "",
+      shortDescription: parsed.shortDescription?.trim() || "",
+      description: parsed.description?.trim() || "",
+      highlight: parsed.highlight?.trim() || "",
+    };
+  } catch (error) {
+    console.error("Erro ao comunicar com o Gemini para autofill:", error);
+    return {
+      error: "Nao foi possivel comunicar com o Gemini. Confirma a API key e tenta novamente.",
     };
   }
 }

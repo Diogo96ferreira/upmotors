@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  generateCarAutofill,
   generateCarCopy,
   saveCar,
   type CarFormState,
@@ -12,21 +13,63 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast-provider";
+import {
+  getBrandOptions,
+  getModelOptions,
+} from "@/lib/car-taxonomy";
 import { CarImageRow, CarRow } from "@/types/database";
 import { Sparkles } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 const categories = ["Performance", "Classicos", "SUV", "Executive"] as const;
 const statuses = ["draft", "available", "reserved", "sold"] as const;
+const statusLabels: Record<typeof statuses[number], string> = {
+  draft: "Rascunho",
+  available: "Disponivel",
+  reserved: "Reservado",
+  sold: "Vendido",
+};
+const fuelOptions = ["Gasolina", "Diesel", "Hibrido", "Plug-in Hybrid", "Eletrico", "GPL"] as const;
+const transmissionOptions = ["Manual", "Automatico", "Semi-automatico"] as const;
+const exteriorColorOptions = [
+  "Branco",
+  "Preto",
+  "Cinzento",
+  "Prateado",
+  "Azul",
+  "Vermelho",
+  "Verde",
+  "Amarelo",
+  "Bege",
+  "Castanho",
+  "Laranja",
+  "Dourado",
+] as const;
+const interiorOptions = [
+  "Tecido preto",
+  "Tecido cinzento",
+  "Pele preta",
+  "Pele castanha",
+  "Pele bege",
+  "Alcantara",
+  "Pele e Alcantara",
+  "Interior desportivo",
+] as const;
+const locationOptions = ["Coimbra", "Taveiro", "Condeixa", "Figueira da Foz", "Aveiro", "Leiria"] as const;
 const initialCarFormState: CarFormState = { error: "" };
 
 function sortImages(images: CarImageRow[] = []) {
   return [...images].sort((a, b) => (a.position ?? 9999) - (b.position ?? 9999));
 }
 
+function withCurrentOption(options: readonly string[], current?: string | null) {
+  return current && !options.includes(current) ? [current, ...options] : [...options];
+}
+
 export function CarForm({ car }: { car?: CarRow | null }) {
   const [state, formAction] = useActionState(saveCar, initialCarFormState);
   const [isGenerating, startGenerating] = useTransition();
+  const [isAutofilling, startAutofilling] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
   const [featuredFileName, setFeaturedFileName] = useState("");
@@ -37,16 +80,60 @@ export function CarForm({ car }: { car?: CarRow | null }) {
   const [shortDescription, setShortDescription] = useState(car?.shortDescription ?? "");
   const [description, setDescription] = useState(car?.description ?? "");
   const [highlight, setHighlight] = useState(car?.highlight ?? "");
+  const [brand, setBrand] = useState(car?.brand ?? "");
+  const [model, setModel] = useState(car?.model ?? "");
+  const [fuel, setFuel] = useState(car?.fuel ?? "");
+  const [transmission, setTransmission] = useState(car?.transmission ?? "");
+  const [powerHp, setPowerHp] = useState(car?.power_hp ? String(car.power_hp) : "");
+  const [category, setCategory] = useState(car?.category ?? "Performance");
+  const [specEngine, setSpecEngine] = useState(car?.specs?.engine ?? "");
+  const [specDrivetrain, setSpecDrivetrain] = useState(car?.specs?.drivetrain ?? "");
+  const [specAcceleration, setSpecAcceleration] = useState(car?.specs?.acceleration ?? "");
 
   const sortedImages = useMemo(() => sortImages(car?.car_images ?? []), [car?.car_images]);
   const featuredImage = sortedImages.find((image) => image.is_feature) ?? sortedImages[0] ?? null;
   const galleryImages = sortedImages.filter((image) => image.id !== featuredImage?.id);
+  const brandOptions = useMemo(() => getBrandOptions(car?.brand), [car?.brand]);
+  const modelOptions = useMemo(() => getModelOptions(brand, car?.model), [brand, car?.model]);
 
   useEffect(() => {
+    setBrand(car?.brand ?? "");
+    setModel(car?.model ?? "");
     setShortDescription(car?.shortDescription ?? "");
     setDescription(car?.description ?? "");
     setHighlight(car?.highlight ?? "");
-  }, [car?.description, car?.highlight, car?.shortDescription]);
+    setFuel(car?.fuel ?? "");
+    setTransmission(car?.transmission ?? "");
+    setPowerHp(car?.power_hp ? String(car.power_hp) : "");
+    setCategory(car?.category ?? "Performance");
+    setSpecEngine(car?.specs?.engine ?? "");
+    setSpecDrivetrain(car?.specs?.drivetrain ?? "");
+    setSpecAcceleration(car?.specs?.acceleration ?? "");
+  }, [
+    car?.brand,
+    car?.category,
+    car?.description,
+    car?.fuel,
+    car?.highlight,
+    car?.model,
+    car?.power_hp,
+    car?.shortDescription,
+    car?.specs?.acceleration,
+    car?.specs?.drivetrain,
+    car?.specs?.engine,
+    car?.transmission,
+  ]);
+
+  function handleBrandChange(nextBrand: string) {
+    setBrand(nextBrand);
+    const nextModels = getModelOptions(nextBrand);
+    const nextModel = nextModels[0] ?? "";
+    setModel(nextModel);
+  }
+
+  function handleModelChange(nextModel: string) {
+    setModel(nextModel);
+  }
 
   useEffect(() => {
     const stateKey = `${state.success ?? ""}|${state.error}|${state.redirectTo ?? ""}`;
@@ -111,6 +198,43 @@ export function CarForm({ car }: { car?: CarRow | null }) {
     });
   }
 
+  function handleAutofill() {
+    if (!formRef.current) {
+      return;
+    }
+
+    startAutofilling(async () => {
+      const formData = new FormData(formRef.current ?? undefined);
+      const result = await generateCarAutofill(formData);
+
+      if (result.error) {
+        toast({
+          title: "Auto preenchimento falhou",
+          description: result.error,
+          variant: "error",
+        });
+        return;
+      }
+
+      if (result.fuel) setFuel(result.fuel);
+      if (result.transmission) setTransmission(result.transmission);
+      if (result.power_hp) setPowerHp(String(result.power_hp));
+      if (result.category) setCategory(result.category);
+      if (result.spec_engine) setSpecEngine(result.spec_engine);
+      if (result.spec_drivetrain) setSpecDrivetrain(result.spec_drivetrain);
+      if (result.spec_acceleration) setSpecAcceleration(result.spec_acceleration);
+      if (result.shortDescription) setShortDescription(result.shortDescription);
+      if (result.description) setDescription(result.description);
+      if (result.highlight) setHighlight(result.highlight);
+
+      toast({
+        title: "Campos preenchidos com IA",
+        description: result.success ?? "Revê as specs antes de guardar a viatura.",
+        variant: "success",
+      });
+    });
+  }
+
   return (
     <form ref={formRef} action={formAction} className="space-y-10">
       <input type="hidden" name="id" defaultValue={car?.id ?? ""} />
@@ -118,11 +242,40 @@ export function CarForm({ car }: { car?: CarRow | null }) {
       <section className="grid gap-8 border border-white/10 bg-zinc-950 p-8 lg:grid-cols-2">
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Marca</span>
-          <Input name="brand" defaultValue={car?.brand ?? ""} required />
+          <Select
+            name="brand"
+            value={brand}
+            onChange={(event) => handleBrandChange(event.target.value)}
+            required
+          >
+            <option value="" disabled>
+              Escolher marca
+            </option>
+            {brandOptions.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Modelo</span>
-          <Input name="model" defaultValue={car?.model ?? ""} required />
+          <Select
+            name="model"
+            value={model}
+            onChange={(event) => handleModelChange(event.target.value)}
+            disabled={!brand}
+            required
+          >
+            <option value="" disabled>
+              {brand ? "Escolher modelo" : "Escolhe uma marca primeiro"}
+            </option>
+            {modelOptions.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Versao</span>
@@ -146,19 +299,56 @@ export function CarForm({ car }: { car?: CarRow | null }) {
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Potencia</span>
-          <Input name="power_hp" type="number" defaultValue={car?.power_hp ?? ""} />
+          <Input
+            name="power_hp"
+            type="number"
+            value={powerHp}
+            onChange={(event) => setPowerHp(event.target.value)}
+          />
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Combustivel</span>
-          <Input name="fuel" defaultValue={car?.fuel ?? ""} required />
+          <Select
+            name="fuel"
+            value={fuel}
+            onChange={(event) => setFuel(event.target.value)}
+            required
+          >
+            <option value="" disabled>
+              Escolher combustivel
+            </option>
+            {withCurrentOption(fuelOptions, fuel).map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Transmissao</span>
-          <Input name="transmission" defaultValue={car?.transmission ?? ""} required />
+          <Select
+            name="transmission"
+            value={transmission}
+            onChange={(event) => setTransmission(event.target.value)}
+            required
+          >
+            <option value="" disabled>
+              Escolher transmissao
+            </option>
+            {withCurrentOption(transmissionOptions, transmission).map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Categoria</span>
-          <Select name="category" defaultValue={car?.category ?? "Performance"}>
+          <Select
+            name="category"
+            value={category}
+            onChange={(event) => setCategory(event.target.value as typeof categories[number])}
+          >
             {categories.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -171,7 +361,7 @@ export function CarForm({ car }: { car?: CarRow | null }) {
           <Select name="status" defaultValue={car?.status ?? "draft"}>
             {statuses.map((item) => (
               <option key={item} value={item}>
-                {item}
+                {statusLabels[item]}
               </option>
             ))}
           </Select>
@@ -181,19 +371,32 @@ export function CarForm({ car }: { car?: CarRow | null }) {
             <div className="space-y-2">
               <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Assistente IA</p>
               <p className="text-sm leading-6 text-zinc-400">
-                Gera descricao curta, descricao principal e highlight com o Ollama local em PT-PT.
+                Usa o Gemini para sugerir specs provaveis e gerar copy em PT-PT. Revê sempre os
+                dados técnicos antes de guardar.
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGenerateCopy}
-              disabled={isGenerating}
-              className="shrink-0"
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              {isGenerating ? "A gerar..." : "Gerar descricao com IA"}
-            </Button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAutofill}
+                disabled={isAutofilling || isGenerating}
+                className="shrink-0"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {isAutofilling ? "A preencher..." : "Auto preencher com IA"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateCopy}
+                disabled={isGenerating || isAutofilling}
+                className="shrink-0"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {isGenerating ? "A gerar..." : "Gerar so descricao"}
+              </Button>
+            </div>
           </div>
         </div>
         <label className="space-y-2 lg:col-span-2">
@@ -212,8 +415,14 @@ export function CarForm({ car }: { car?: CarRow | null }) {
             name="description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
+            minLength={180}
+            rows={8}
             required
           />
+          <p className="text-sm leading-6 text-zinc-500">
+            Minimo recomendado: 2 paragrafos com contexto real da viatura, extras relevantes,
+            estado, uso e motivo de compra. Atual: {description.length} caracteres.
+          </p>
         </label>
         <label className="space-y-2 lg:col-span-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Highlight</span>
@@ -322,29 +531,97 @@ export function CarForm({ car }: { car?: CarRow | null }) {
       <section className="grid gap-8 border border-white/10 bg-zinc-950 p-8 lg:grid-cols-2">
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Motor</span>
-          <Input name="spec_engine" defaultValue={car?.specs?.engine ?? ""} />
+          <Input
+            name="spec_engine"
+            value={specEngine}
+            onChange={(event) => setSpecEngine(event.target.value)}
+          />
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Tracao</span>
-          <Input name="spec_drivetrain" defaultValue={car?.specs?.drivetrain ?? ""} />
+          <Input
+            name="spec_drivetrain"
+            value={specDrivetrain}
+            onChange={(event) => setSpecDrivetrain(event.target.value)}
+          />
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">0-100 km/h</span>
-          <Input name="spec_acceleration" defaultValue={car?.specs?.acceleration ?? ""} />
+          <Input
+            name="spec_acceleration"
+            value={specAcceleration}
+            onChange={(event) => setSpecAcceleration(event.target.value)}
+          />
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
             Cor exterior
           </span>
-          <Input name="spec_exterior" defaultValue={car?.specs?.exterior ?? ""} />
+          <Select name="spec_exterior" defaultValue={car?.specs?.exterior ?? ""}>
+            <option value="">Por validar</option>
+            {withCurrentOption(exteriorColorOptions, car?.specs?.exterior).map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Interior</span>
-          <Input name="spec_interior" defaultValue={car?.specs?.interior ?? ""} />
+          <Select name="spec_interior" defaultValue={car?.specs?.interior ?? ""}>
+            <option value="">Por validar</option>
+            {withCurrentOption(interiorOptions, car?.specs?.interior).map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
         </label>
         <label className="space-y-2">
           <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Localizacao</span>
-          <Input name="spec_location" defaultValue={car?.specs?.location ?? ""} />
+          <Select name="spec_location" defaultValue={car?.specs?.location ?? "Coimbra"}>
+            {withCurrentOption(locationOptions, car?.specs?.location).map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
+        </label>
+        <label className="space-y-2 lg:col-span-2">
+          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+            Equipamento e extras
+          </span>
+          <Textarea
+            name="spec_equipment"
+            defaultValue={car?.specs?.equipment ?? ""}
+            rows={5}
+            placeholder="Ex: jantes especiais, bancos em pele, sensores, camara, CarPlay, teto panoramico..."
+          />
+          <p className="text-sm leading-6 text-zinc-500">
+            Estes detalhes sao usados pela IA para escrever uma descricao mais concreta e apelativa.
+          </p>
+        </label>
+        <label className="space-y-2">
+          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+            Historico e manutencao
+          </span>
+          <Textarea
+            name="spec_history"
+            defaultValue={car?.specs?.history ?? ""}
+            rows={5}
+            placeholder="Ex: livro de revisoes, manutencao recente, pneus novos, historico conhecido..."
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
+            Observacoes comerciais
+          </span>
+          <Textarea
+            name="spec_commercial_notes"
+            defaultValue={car?.specs?.commercialNotes ?? ""}
+            rows={5}
+            placeholder="Ex: ideal para primeiro carro, unidade rara, baixo custo de utilizacao, perfil familiar..."
+          />
         </label>
       </section>
 

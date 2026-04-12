@@ -22,6 +22,13 @@ type DetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
+function splitDetailList(value: string) {
+  return value
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export async function generateMetadata({ params }: DetailPageProps): Promise<Metadata> {
   const { id } = await params;
   const car = await getCarBySlug(id);
@@ -58,6 +65,11 @@ export default async function CarDetailPage({ params }: DetailPageProps) {
 
   const similarCars = await getSimilarCars(id);
   const displayName = [car.brand, car.model, car.version].filter(Boolean).join(" ");
+  const equipmentItems = splitDetailList(car.specs.equipment);
+  const detailBlocks = [
+    ["Historico e manutencao", car.specs.history],
+    ["Notas da equipa", car.specs.commercialNotes],
+  ].filter(([, value]) => Boolean(value));
 
   return (
     <>
@@ -173,6 +185,41 @@ export default async function CarDetailPage({ params }: DetailPageProps) {
                 <CarGallery images={[car.image, ...car.gallery]} altBase={`${displayName} em Coimbra`} />
               </div>
             </div>
+
+            {equipmentItems.length > 0 || detailBlocks.length > 0 ? (
+              <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+                {equipmentItems.length > 0 ? (
+                  <div className="border border-white/8 bg-zinc-950 p-8">
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">
+                      Equipamento
+                    </p>
+                    <h2 className="mt-4 font-[family-name:var(--font-heading)] text-3xl font-bold uppercase tracking-tight">
+                      Extras e detalhes
+                    </h2>
+                    <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                      {equipmentItems.map((item) => (
+                        <div key={item} className="border border-white/10 px-4 py-3 text-sm text-zinc-200">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {detailBlocks.length > 0 ? (
+                  <div className="space-y-4">
+                    {detailBlocks.map(([label, value]) => (
+                      <div key={label} className="border border-white/8 bg-black p-6">
+                        <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">
+                          {label}
+                        </p>
+                        <p className="mt-4 leading-7 text-zinc-300">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <aside className="space-y-6 lg:sticky lg:top-28 lg:h-fit">
