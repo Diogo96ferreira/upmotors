@@ -2,13 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Car } from "@/types/car";
-import { CarStatus } from "@/types/database";
 import { CarGrid } from "@/components/cars/car-grid";
 import { FiltersSidebar } from "@/components/cars/filters-sidebar";
+import { Car } from "@/types/car";
+import { CarStatus } from "@/types/database";
 
 type Category = "Todos" | "Performance" | "Classicos" | "SUV" | "Executive";
-type Transmission = "Todos" | "Manual" | "Automático";
 type SortValue = "price-asc" | "price-desc" | "newest";
 type StatusValue = "Todos" | CarStatus;
 
@@ -16,19 +15,23 @@ type StockCatalogProps = {
   cars: Car[];
 };
 
+function getInitialMaxPrice(cars: Car[]) {
+  return cars.length > 0 ? Math.max(...cars.map((car) => car.price)) : 0;
+}
+
+function getInitialMinYear(cars: Car[]) {
+  return cars.length > 0 ? Math.min(...cars.map((car) => car.year)) : new Date().getFullYear();
+}
+
 export function StockCatalog({ cars }: StockCatalogProps) {
   const [category, setCategory] = useState<Category>("Todos");
   const [brand, setBrand] = useState("Todos");
   const [fuel, setFuel] = useState("Todos");
   const [status, setStatus] = useState<StatusValue>("Todos");
-  const [transmission, setTransmission] = useState<Transmission>("Todos");
+  const [transmission, setTransmission] = useState("Todos");
   const [sort, setSort] = useState<SortValue>("price-asc");
-  const [maxPrice, setMaxPrice] = useState(() =>
-    cars.length > 0 ? Math.max(...cars.map((car) => car.price)) : 0
-  );
-  const [minYear, setMinYear] = useState(() =>
-    cars.length > 0 ? Math.min(...cars.map((car) => car.year)) : new Date().getFullYear()
-  );
+  const [maxPrice, setMaxPrice] = useState(() => getInitialMaxPrice(cars));
+  const [minYear, setMinYear] = useState(() => getInitialMinYear(cars));
 
   const filteredCars = useMemo(() => {
     const nextCars = cars
@@ -48,6 +51,17 @@ export function StockCatalog({ cars }: StockCatalogProps) {
   }, [cars, category, brand, fuel, status, transmission, sort, maxPrice, minYear]);
 
   const animationKey = `${category}-${brand}-${fuel}-${status}-${transmission}-${sort}-${maxPrice}-${minYear}-${filteredCars.map((car) => car.id).join("-")}`;
+
+  function resetFilters() {
+    setCategory("Todos");
+    setBrand("Todos");
+    setFuel("Todos");
+    setStatus("Todos");
+    setTransmission("Todos");
+    setSort("price-asc");
+    setMaxPrice(getInitialMaxPrice(cars));
+    setMinYear(getInitialMinYear(cars));
+  }
 
   return (
     <div className="grid gap-12 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -69,11 +83,12 @@ export function StockCatalog({ cars }: StockCatalogProps) {
         onSortChange={setSort}
         onMaxPriceChange={setMaxPrice}
         onMinYearChange={setMinYear}
+        onResetFilters={resetFilters}
       />
 
       <div className="space-y-8">
         <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-          <p className="text-sm text-zinc-400">{filteredCars.length} viaturas disponíveis</p>
+          <p className="text-sm text-zinc-400">{filteredCars.length} viaturas disponiveis</p>
           <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">
             Curadoria Up Motors
           </p>
@@ -93,8 +108,11 @@ export function StockCatalog({ cars }: StockCatalogProps) {
                 emptyState={{
                   eyebrow: "Sem resultados",
                   title: "Nenhuma viatura corresponde ao filtro",
-                  description:
-                    "Ajuste os critérios para explorar o restante stock disponível.",
+                  description: "Ajuste os criterios para explorar o restante stock disponivel.",
+                  action: {
+                    label: "Limpar filtros",
+                    onClick: resetFilters,
+                  },
                 }}
               />
             </motion.div>

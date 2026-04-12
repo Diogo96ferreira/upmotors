@@ -16,6 +16,11 @@ export default async function BackofficeDashboardPage() {
 
   const recentCars = cars.slice(0, 5);
   const recentLeads = leads.slice(0, 5);
+  const leadFormLabels = {
+    contact: "Contacto",
+    sell: "Venda",
+    import: "Importacao",
+  };
 
   return (
     <BackofficeShell
@@ -87,7 +92,7 @@ export default async function BackofficeDashboardPage() {
                   </p>
                 </div>
                 <p className="mt-2 text-sm text-zinc-400">
-                  {lead.form_type === "sell" ? "Venda" : "Contacto"} | {lead.email}
+                  {leadFormLabels[lead.form_type]} | {lead.email}
                 </p>
                 <p className="mt-3 text-sm text-zinc-300">{lead.message}</p>
               </div>

@@ -9,8 +9,9 @@ type CarGridProps = {
     title: string;
     description: string;
     action?: {
-      href: string;
+      href?: string;
       label: string;
+      onClick?: () => void;
     };
   };
 };

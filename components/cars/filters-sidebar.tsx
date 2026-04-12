@@ -1,13 +1,12 @@
 "use client";
 
-import { Car } from "@/types/car";
-import { CarStatus } from "@/types/database";
 import { Select } from "@/components/ui/select";
 import { getCarCategoryLabel, getCarStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { Car } from "@/types/car";
+import { CarStatus } from "@/types/database";
 
 type Category = "Todos" | "Performance" | "Classicos" | "SUV" | "Executive";
-type Transmission = "Todos" | "Manual" | "Automático";
 type SortValue = "price-asc" | "price-desc" | "newest";
 type StatusValue = "Todos" | CarStatus;
 
@@ -17,7 +16,7 @@ type FiltersSidebarProps = {
   brand: string;
   fuel: string;
   status: StatusValue;
-  transmission: Transmission;
+  transmission: string;
   sort: SortValue;
   maxPrice: number;
   minYear: number;
@@ -25,15 +24,15 @@ type FiltersSidebarProps = {
   onBrandChange: (value: string) => void;
   onFuelChange: (value: string) => void;
   onStatusChange: (value: StatusValue) => void;
-  onTransmissionChange: (value: Transmission) => void;
+  onTransmissionChange: (value: string) => void;
   onSortChange: (value: SortValue) => void;
   onMaxPriceChange: (value: number) => void;
   onMinYearChange: (value: number) => void;
+  onResetFilters: () => void;
 };
 
 const categories: Category[] = ["Todos", "Performance", "Classicos", "SUV", "Executive"];
-const transmissions: Transmission[] = ["Todos", "Manual", "Automático"];
-const statuses: StatusValue[] = ["Todos", "available", "reserved", "sold", "draft"];
+const statuses: StatusValue[] = ["Todos", "available", "reserved", "sold"];
 const statusLabels: Record<StatusValue, string> = {
   Todos: "Todos os estados",
   available: getCarStatusLabel("available"),
@@ -60,9 +59,11 @@ export function FiltersSidebar({
   onSortChange,
   onMaxPriceChange,
   onMinYearChange,
+  onResetFilters,
 }: FiltersSidebarProps) {
   const brands = Array.from(new Set(cars.map((car) => car.brand))).sort();
   const fuels = Array.from(new Set(cars.map((car) => car.fuel))).sort();
+  const transmissions = ["Todos", ...Array.from(new Set(cars.map((car) => car.transmission))).sort()];
   const highestPrice = cars.length > 0 ? Math.max(...cars.map((car) => car.price)) : 0;
   const lowestYear =
     cars.length > 0 ? Math.min(...cars.map((car) => car.year)) : new Date().getFullYear();
@@ -70,9 +71,18 @@ export function FiltersSidebar({
   return (
     <aside className="w-full max-w-xs space-y-10 lg:sticky lg:top-28">
       <div className="space-y-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-zinc-500">
-          Filtrar colecao
-        </p>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-zinc-500">
+            Filtrar colecao
+          </p>
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500 transition-colors hover:text-white"
+          >
+            Limpar
+          </button>
+        </div>
         <div className="space-y-3">
           {categories.map((item) => (
             <button

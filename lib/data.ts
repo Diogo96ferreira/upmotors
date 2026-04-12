@@ -76,6 +76,7 @@ async function selectCars() {
   const withImages = await supabase
     .from("cars")
     .select(CARS_SELECT)
+    .neq("status", "draft")
     .order("created_at", { ascending: false });
 
   if (!withImages.error) {
@@ -87,6 +88,7 @@ async function selectCars() {
   const fallback = await supabase
     .from("cars")
     .select(FALLBACK_CARS_SELECT)
+    .neq("status", "draft")
     .order("created_at", { ascending: false });
 
   if (fallback.error) {
@@ -102,7 +104,12 @@ async function selectSingleCar(column: "slug" | "id", value: string) {
     return null;
   }
 
-  const withImages = await supabase.from("cars").select(CARS_SELECT).eq(column, value).maybeSingle();
+  const withImages = await supabase
+    .from("cars")
+    .select(CARS_SELECT)
+    .eq(column, value)
+    .neq("status", "draft")
+    .maybeSingle();
 
   if (!withImages.error) {
     return (withImages.data as CarRow | null) ?? null;
@@ -114,6 +121,7 @@ async function selectSingleCar(column: "slug" | "id", value: string) {
     .from("cars")
     .select(FALLBACK_CARS_SELECT)
     .eq(column, value)
+    .neq("status", "draft")
     .maybeSingle();
 
   if (fallback.error) {

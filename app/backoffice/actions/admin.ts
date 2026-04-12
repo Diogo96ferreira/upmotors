@@ -539,6 +539,44 @@ async function persistCar(
   };
 }
 
+async function getAvailableCarSlug(
+  supabase: NonNullable<ReturnType<typeof getSupabaseServerClient>>,
+  desiredSlug: string,
+  currentCarId?: string
+) {
+  const safeSlug = desiredSlug || "viatura";
+  const { data, error } = await supabase
+    .from("cars")
+    .select("id, slug")
+    .ilike("slug", `${safeSlug}%`);
+
+  if (error) {
+    console.error("Erro ao validar slug da viatura:", error);
+    return safeSlug;
+  }
+
+  const existingRows = (data ?? []) as Array<{ id: string; slug: string }>;
+  const occupiedSlugs = new Set(
+    existingRows
+      .filter((row) => row.id !== currentCarId)
+      .map((row) => row.slug)
+  );
+
+  if (!occupiedSlugs.has(safeSlug)) {
+    return safeSlug;
+  }
+
+  for (let suffix = 2; suffix < 100; suffix += 1) {
+    const candidate = `${safeSlug}-${suffix}`;
+
+    if (!occupiedSlugs.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return `${safeSlug}-${Date.now()}`;
+}
+
 async function uploadCarImage(
   supabase: NonNullable<ReturnType<typeof getSupabaseServerClient>>,
   carId: string,
@@ -696,8 +734,9 @@ export async function saveCar(
   }
 
   const slugBase = getText(formData, "slug") || `${brand}-${model}-${year}`;
+  const slug = await getAvailableCarSlug(supabase, slugify(slugBase), id || undefined);
   const payload: Record<string, unknown> = {
-    slug: slugify(slugBase),
+    slug,
     brand,
     model,
     version: getNullableText(formData, "version"),

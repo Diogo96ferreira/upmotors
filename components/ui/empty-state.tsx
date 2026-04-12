@@ -7,8 +7,9 @@ type EmptyStateProps = {
   title: string;
   description: string;
   action?: {
-    href: string;
+    href?: string;
     label: string;
+    onClick?: () => void;
   };
 };
 
@@ -20,10 +21,14 @@ export function EmptyState({ eyebrow, title, description, action }: EmptyStatePr
         {title}
       </h3>
       <p className="mt-4 max-w-2xl text-base leading-8 text-zinc-400">{description}</p>
-      {action ? (
+      {action?.href ? (
         <Link href={action.href} className={cn(buttonVariants(), "mt-8")}>
           {action.label}
         </Link>
+      ) : action?.onClick ? (
+        <button type="button" onClick={action.onClick} className={cn(buttonVariants(), "mt-8")}>
+          {action.label}
+        </button>
       ) : null}
     </div>
   );
